@@ -3,9 +3,9 @@
 
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport"="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Sistema de Gestão de Combustível — AMTC</title>
-
+  
   <!-- Bootstrap 5.3 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <!-- Lucide Icons -->
@@ -38,8 +38,7 @@
       box-sizing: border-box;
     }
 
-    html,
-    body {
+    html, body {
       height: 100%;
       margin: 0;
       padding: 0;
@@ -51,26 +50,6 @@
       background: var(--bg-primary);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-    }
-
-    /* Loading Screen */
-    .loading-screen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: var(--bg-primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .loading-screen.hidden {
-      display: none;
     }
 
     /* Layout Principal */
@@ -258,7 +237,7 @@
       right: -50%;
       width: 200%;
       height: 200%;
-      background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
       pointer-events: none;
     }
 
@@ -464,8 +443,7 @@
       gap: 16px;
     }
 
-    .toolbar-left,
-    .toolbar-right {
+    .toolbar-left, .toolbar-right {
       display: flex;
       gap: 12px;
       align-items: center;
@@ -506,7 +484,6 @@
         opacity: 0;
         transform: translateY(-20px);
       }
-
       to {
         opacity: 1;
         transform: translateY(0);
@@ -568,7 +545,6 @@
         opacity: 0;
         transform: translateX(100%);
       }
-
       to {
         opacity: 1;
         transform: translateX(0);
@@ -611,55 +587,21 @@
     }
 
     @keyframes spin {
-      0% {
-        transform: rotate(0deg);
-      }
-
-      100% {
-        transform: rotate(360deg);
-      }
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
     /* Utilities */
-    .text-primary {
-      color: var(--primary) !important;
-    }
-
-    .text-success {
-      color: var(--success) !important;
-    }
-
-    .text-danger {
-      color: var(--danger) !important;
-    }
-
-    .text-warning {
-      color: var(--warning) !important;
-    }
-
-    .text-secondary {
-      color: var(--text-secondary) !important;
-    }
-
-    .text-end {
-      text-align: right !important;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .mb-0 {
-      margin-bottom: 0 !important;
-    }
-
-    .mt-3 {
-      margin-top: 24px !important;
-    }
-
-    .fw-bold {
-      font-weight: 700 !important;
-    }
+    .text-primary { color: var(--primary) !important; }
+    .text-success { color: var(--success) !important; }
+    .text-danger { color: var(--danger) !important; }
+    .text-warning { color: var(--warning) !important; }
+    .text-secondary { color: var(--text-secondary) !important; }
+    .text-end { text-align: right !important; }
+    .hidden { display: none !important; }
+    .mb-0 { margin-bottom: 0 !important; }
+    .mt-3 { margin-top: 24px !important; }
+    .fw-bold { font-weight: 700 !important; }
 
     /* Responsive */
     @media (max-width: 768px) {
@@ -717,7 +659,7 @@
       display: none;
     }
 
-    /* Report Styles */
+    /* Report Styles (mantido do original) */
     .rpt {
       font-family: Arial, Helvetica, sans-serif;
       font-size: 12px;
@@ -799,12 +741,6 @@
 </head>
 
 <body>
-  <!-- Loading Screen -->
-  <div class="loading-screen" id="loadingScreen">
-    <div class="loading-spinner"></div>
-    <p>Carregando dados...</p>
-  </div>
-
   <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 
@@ -862,6 +798,14 @@
             Veículos
           </a>
         </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Sistema</div>
+          <a href="#/importexport" class="nav-link">
+            <i data-lucide="database"></i>
+            Backup/Restaurar
+          </a>
+        </div>
       </nav>
     </aside>
 
@@ -885,41 +829,7 @@
   <!-- Print Area -->
   <div id="printRoot"></div>
 
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-    import {
-      getFirestore,
-      collection,
-      getDocs,
-      addDoc,
-      updateDoc,
-      deleteDoc,
-      doc,
-      query,
-      where,
-      orderBy,
-      onSnapshot
-    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-    /*********************
-     * FIREBASE CONFIG
-     * SUBSTITUA PELOS SEUS DADOS DO FIREBASE
-     *********************/
-    const firebaseConfig = {
-      apiKey: "AIzaSyCE6j2Ouc2Hz5a6XHQ_5Zm4nbnMjJF64Oc",
-      authDomain: "sistema-relatorio-combustivel.firebaseapp.com",
-      projectId: "sistema-relatorio-combustivel",
-      storageBucket: "sistema-relatorio-combustivel.firebasestorage.app",
-      messagingSenderId: "376654711993",
-      appId: "1:376654711993:web:b8f02323c31751c8ab9f68",
-      measurementId: "G-Z6NMSKS9N4"
-    };
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
+  <script>
     /*********************
      * CONSTANTS & ENUMS
      *********************/
@@ -941,6 +851,14 @@
       t.innerHTML = html.trim();
       return t.content.firstChild;
     };
+
+    function uuid() {
+      return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === "x" ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      });
+    }
 
     function findById(arr, id) {
       return arr.find((x) => x.id === id);
@@ -1010,7 +928,7 @@
     }
 
     /*********************
-     * DATABASE (Firebase Firestore)
+     * DATABASE (LocalStorage)
      *********************/
     const DB = {
       fornecedores: [],
@@ -1022,63 +940,14 @@
       itens: []
     };
 
-    // Carregar todos os dados do Firestore
+    function saveDB() {
+      localStorage.setItem("COMBUSTIVEL_DB", JSON.stringify(DB));
+    }
+
     async function loadDB() {
-      try {
-        const collections = ['fornecedores', 'contratos', 'documentos', 'motoristas', 'veiculos', 'notas', 'itens'];
-
-        for (const collectionName of collections) {
-          const querySnapshot = await getDocs(collection(db, collectionName));
-          DB[collectionName] = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-        }
-
-        console.log('Dados carregados do Firebase:', DB);
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-        showToast('Erro ao carregar dados do Firebase', 'danger');
-      }
-    }
-
-    // CRUD Helpers
-    async function addDocument(collectionName, data) {
-      try {
-        const docRef = await addDoc(collection(db, collectionName), data);
-        const newDoc = { id: docRef.id, ...data };
-        DB[collectionName].push(newDoc);
-        return newDoc;
-      } catch (error) {
-        console.error('Erro ao adicionar:', error);
-        showToast('Erro ao salvar dados', 'danger');
-        throw error;
-      }
-    }
-
-    async function updateDocument(collectionName, id, data) {
-      try {
-        const docRef = doc(db, collectionName, id);
-        await updateDoc(docRef, data);
-        const index = DB[collectionName].findIndex(item => item.id === id);
-        if (index !== -1) {
-          DB[collectionName][index] = { ...DB[collectionName][index], ...data };
-        }
-      } catch (error) {
-        console.error('Erro ao atualizar:', error);
-        showToast('Erro ao atualizar dados', 'danger');
-        throw error;
-      }
-    }
-
-    async function deleteDocument(collectionName, id) {
-      try {
-        await deleteDoc(doc(db, collectionName, id));
-        DB[collectionName] = DB[collectionName].filter(item => item.id !== id);
-      } catch (error) {
-        console.error('Erro ao deletar:', error);
-        showToast('Erro ao deletar dados', 'danger');
-        throw error;
+      const raw = localStorage.getItem("COMBUSTIVEL_DB");
+      if (raw) {
+        Object.assign(DB, JSON.parse(raw));
       }
     }
 
@@ -1089,10 +958,12 @@
       const hash = location.hash || "#/dashboard";
       const route = hash.substring(2);
 
+      // Update active nav link
       qsa(".nav-link").forEach(link => {
         link.classList.toggle("active", link.getAttribute("href") === hash);
       });
 
+      // Update page title
       const titleMap = {
         dashboard: "Dashboard",
         notas: "Notas Fiscais",
@@ -1102,10 +973,12 @@
         contratos: "Contratos",
         documentos: "Empenhos & AFTs",
         motoristas: "Motoristas",
-        veiculos: "Veículos"
+        veiculos: "Veículos",
+        importexport: "Backup & Restaurar"
       };
       qs("#pageTitle").textContent = titleMap[route] || "Sistema";
 
+      // Render based on route
       const routeHandlers = {
         dashboard: renderDashboard,
         fornecedores: renderFornecedores,
@@ -1115,12 +988,14 @@
         veiculos: renderVeiculos,
         notas: renderNotas,
         historico: renderHistorico,
-        relatorios: renderRelatorios
+        relatorios: renderRelatorios,
+        importexport: renderImportExport
       };
 
       const handler = routeHandlers[route] || renderDashboard;
       await handler();
 
+      // Refresh Lucide icons
       lucide.createIcons();
     }
 
@@ -1131,12 +1006,13 @@
      *********************/
     async function renderDashboard() {
       const view = qs("#view");
-
+      
+      // Calcular estatísticas
       const totalNotas = DB.notas.filter(n => n.finalizada_em).length;
       const totalAbastecimentos = DB.itens.length;
       const totalLitros = DB.itens.reduce((sum, it) => sum + (it.qtd_litros || 0), 0);
       const totalValor = DB.itens.reduce((sum, it) => sum + (it.valor_abastecimento || 0), 0);
-
+      
       view.innerHTML = `
         <div class="stats-grid">
           <div class="stat-card">
@@ -1218,6 +1094,7 @@
         </div>
       `;
 
+      // Render chart
       const ctx = qs("#chartCombustivel");
       if (ctx) {
         const porComb = {};
@@ -1291,10 +1168,10 @@
                     <td>${escapeHtml(f.cnpj)}</td>
                     <td>${escapeHtml(f.telefone || '-')}</td>
                     <td class="text-end">
-                      <button class="btn-modern btn-outline btn-sm" onclick="window.editFornecedor('${f.id}')">
+                      <button class="btn-modern btn-outline btn-sm" onclick="editFornecedor('${f.id}')">
                         <i data-lucide="edit-2"></i>
                       </button>
-                      <button class="btn-modern btn-danger btn-sm" onclick="window.deleteFornecedor('${f.id}')">
+                      <button class="btn-modern btn-danger btn-sm" onclick="deleteFornecedor('${f.id}')">
                         <i data-lucide="trash-2"></i>
                       </button>
                     </td>
@@ -1358,7 +1235,7 @@
       document.body.appendChild(modal);
       lucide.createIcons();
 
-      qs("#btnSaveFornecedor", modal).onclick = async () => {
+      qs("#btnSaveFornecedor", modal).onclick = () => {
         const form = qs("#formFornecedor", modal);
         if (!form.checkValidity()) {
           form.reportValidity();
@@ -1368,87 +1245,1520 @@
         const data = new FormData(form);
         const obj = Object.fromEntries(data.entries());
 
-        try {
-          if (isEdit) {
-            await updateDocument('fornecedores', id, obj);
-          } else {
-            await addDocument('fornecedores', obj);
-          }
-
-          modal.remove();
-          renderRoute();
-          showToast(`Fornecedor ${isEdit ? 'atualizado' : 'criado'} com sucesso!`, 'success');
-        } catch (error) {
-          // Toast de erro já mostrado no helper
+        if (isEdit) {
+          Object.assign(fornecedor, obj);
+        } else {
+          DB.fornecedores.push({ id: uuid(), ...obj });
         }
+
+        saveDB();
+        modal.remove();
+        renderRoute();
+        showToast(`Fornecedor ${isEdit ? 'atualizado' : 'criado'} com sucesso!`, 'success');
       };
     }
 
     window.editFornecedor = (id) => showFornecedorModal(id);
-    window.deleteFornecedor = async (id) => {
+    window.deleteFornecedor = (id) => {
       if (!confirm('Deseja realmente excluir este fornecedor?')) return;
-      try {
-        await deleteDocument('fornecedores', id);
-        renderRoute();
-        showToast('Fornecedor excluído com sucesso!', 'success');
-      } catch (error) {
-        // Toast de erro já mostrado
-      }
+      DB.fornecedores = DB.fornecedores.filter(f => f.id !== id);
+      saveDB();
+      renderRoute();
+      showToast('Fornecedor excluído com sucesso!', 'success');
     };
 
-    // Similar implementations for Contratos, Documentos, Motoristas, Veículos...
-    // (Due to length constraints, continuing with the core implementations)
+    /*********************
+     * CONTRATOS (Simplified)
+     *********************/
+    async function renderContratos() {
+      const view = qs("#view");
+      view.innerHTML = `
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <button class="btn-modern btn-primary" id="btnNovoContrato">
+              <i data-lucide="plus"></i>
+              Novo Contrato
+            </button>
+          </div>
+          <div class="toolbar-right">
+            <span class="badge-modern badge-primary">
+              <i data-lucide="file-signature"></i>
+              ${DB.contratos.length} contratos
+            </span>
+          </div>
+        </div>
 
-    // Exposing necessary functions to window
-    window.renderDashboard = renderDashboard;
-    window.renderFornecedores = renderFornecedores;
-    window.renderContratos = () => { /* Similar to Fornecedores */ };
-    window.renderDocumentos = () => { /* Similar to Fornecedores */ };
-    window.renderMotoristas = () => { /* Similar to Fornecedores */ };
-    window.renderVeiculos = () => { /* Similar to Fornecedores */ };
-    window.renderNotas = () => { /* Implementation */ };
-    window.renderHistorico = () => { /* Implementation */ };
-    window.renderRelatorios = () => { /* Implementation */ };
+        <div class="card-modern">
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>Número</th>
+                  <th>Fornecedor</th>
+                  <th>Objeto</th>
+                  <th class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${DB.contratos.map(c => {
+                  const fornecedor = findById(DB.fornecedores, c.fornecedor_id);
+                  return `
+                    <tr>
+                      <td><strong>${escapeHtml(c.numero)}</strong></td>
+                      <td>${escapeHtml(fornecedor?.razao_social || '-')}</td>
+                      <td>${escapeHtml(c.objeto)}</td>
+                      <td class="text-end">
+                        <button class="btn-modern btn-outline btn-sm" onclick="editContrato('${c.id}')">
+                          <i data-lucide="edit-2"></i>
+                        </button>
+                        <button class="btn-modern btn-danger btn-sm" onclick="deleteContrato('${c.id}')">
+                          <i data-lucide="trash-2"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      qs("#btnNovoContrato").onclick = () => showContratoModal();
+    }
+
+    function showContratoModal(id = null) {
+      const contrato = id ? findById(DB.contratos, id) : {};
+      const isEdit = !!id;
+
+      const modal = el(`
+        <div class="modal-overlay active">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title">${isEdit ? 'Editar' : 'Novo'} Contrato</h3>
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="formContrato">
+                <div class="form-group">
+                  <label class="form-label">Número do Contrato *</label>
+                  <input type="text" class="form-control-modern" name="numero" value="${escapeHtml(contrato.numero || '')}" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Fornecedor *</label>
+                  <select class="form-control-modern" name="fornecedor_id" required>
+                    <option value="">Selecione...</option>
+                    ${DB.fornecedores.map(f => `
+                      <option value="${f.id}" ${contrato.fornecedor_id === f.id ? 'selected' : ''}>
+                        ${escapeHtml(f.razao_social)}
+                      </option>
+                    `).join('')}
+                  </select>
+                </div>
+                <div class="form-group mb-0">
+                  <label class="form-label">Objeto *</label>
+                  <textarea class="form-control-modern" name="objeto" rows="3" required>${escapeHtml(contrato.objeto || '')}</textarea>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                Cancelar
+              </button>
+              <button class="btn-modern btn-primary" id="btnSaveContrato">
+                <i data-lucide="save"></i>
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      `);
+
+      document.body.appendChild(modal);
+      lucide.createIcons();
+
+      qs("#btnSaveContrato", modal).onclick = () => {
+        const form = qs("#formContrato", modal);
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        const data = new FormData(form);
+        const obj = Object.fromEntries(data.entries());
+
+        if (isEdit) {
+          Object.assign(contrato, obj);
+        } else {
+          DB.contratos.push({ id: uuid(), ...obj });
+        }
+
+        saveDB();
+        modal.remove();
+        renderRoute();
+        showToast(`Contrato ${isEdit ? 'atualizado' : 'criado'} com sucesso!`, 'success');
+      };
+    }
+
+    window.editContrato = (id) => showContratoModal(id);
+    window.deleteContrato = (id) => {
+      if (!confirm('Deseja realmente excluir este contrato?')) return;
+      DB.contratos = DB.contratos.filter(c => c.id !== id);
+      saveDB();
+      renderRoute();
+      showToast('Contrato excluído com sucesso!', 'success');
+    };
+
+    /*********************
+     * DOCUMENTOS (Simplified - Similar pattern)
+     *********************/
+    async function renderDocumentos() {
+      const view = qs("#view");
+      view.innerHTML = `
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <button class="btn-modern btn-primary" id="btnNovoDoc">
+              <i data-lucide="plus"></i>
+              Novo Empenho/AFT
+            </button>
+          </div>
+          <div class="toolbar-right">
+            <span class="badge-modern badge-primary">
+              <i data-lucide="folder"></i>
+              ${DB.documentos.length} documentos
+            </span>
+          </div>
+        </div>
+
+        <div class="card-modern">
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Número</th>
+                  <th>Combustível</th>
+                  <th class="text-end">Saldo</th>
+                  <th class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${DB.documentos.map(d => `
+                  <tr>
+                    <td><span class="badge-modern ${d.tipo_documento === DOC_TIPO.EMP ? 'badge-primary' : 'badge-warning'}">${d.tipo_documento}</span></td>
+                    <td><strong>${escapeHtml(d.numero)}</strong></td>
+                    <td>${COMB_LABEL[d.combustivel]}</td>
+                    <td class="text-end">${fmtBRL(d.saldo_atual)}</td>
+                    <td class="text-end">
+                      <button class="btn-modern btn-outline btn-sm" onclick="editDocumento('${d.id}')">
+                        <i data-lucide="edit-2"></i>
+                      </button>
+                      <button class="btn-modern btn-danger btn-sm" onclick="deleteDocumento('${d.id}')">
+                        <i data-lucide="trash-2"></i>
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      qs("#btnNovoDoc").onclick = () => showDocumentoModal();
+    }
+
+    function showDocumentoModal(id = null) {
+      const doc = id ? findById(DB.documentos, id) : { saldo_atual: 0 };
+      const isEdit = !!id;
+
+      const modal = el(`
+        <div class="modal-overlay active">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title">${isEdit ? 'Editar' : 'Novo'} Documento</h3>
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="formDoc">
+                <div class="form-group">
+                  <label class="form-label">Tipo *</label>
+                  <select class="form-control-modern" name="tipo_documento" required>
+                    <option value="EMP" ${doc.tipo_documento === DOC_TIPO.EMP ? 'selected' : ''}>Empenho</option>
+                    <option value="AFT" ${doc.tipo_documento === DOC_TIPO.AFT ? 'selected' : ''}>AFT</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Número *</label>
+                  <input type="text" class="form-control-modern" name="numero" value="${escapeHtml(doc.numero || '')}" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Contrato *</label>
+                  <select class="form-control-modern" name="contrato_id" required>
+                    <option value="">Selecione...</option>
+                    ${DB.contratos.map(c => `
+                      <option value="${c.id}" ${doc.contrato_id === c.id ? 'selected' : ''}>
+                        ${escapeHtml(c.numero)}
+                      </option>
+                    `).join('')}
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Combustível *</label>
+                  <select class="form-control-modern" name="combustivel" required>
+                    ${Object.entries(COMB_LABEL).map(([k, v]) => `
+                      <option value="${k}" ${doc.combustivel === k ? 'selected' : ''}>${v}</option>
+                    `).join('')}
+                  </select>
+                </div>
+                <div class="form-group mb-0">
+                  <label class="form-label">Saldo Atual (R$) *</label>
+                  <input type="number" step="0.01" class="form-control-modern" name="saldo_atual" value="${doc.saldo_atual || 0}" required>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                Cancelar
+              </button>
+              <button class="btn-modern btn-primary" id="btnSaveDoc">
+                <i data-lucide="save"></i>
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      `);
+
+      document.body.appendChild(modal);
+      lucide.createIcons();
+
+      qs("#btnSaveDoc", modal).onclick = () => {
+        const form = qs("#formDoc", modal);
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        const data = new FormData(form);
+        const obj = Object.fromEntries(data.entries());
+        obj.saldo_atual = parseFloat(obj.saldo_atual);
+
+        if (isEdit) {
+          Object.assign(doc, obj);
+        } else {
+          DB.documentos.push({ id: uuid(), ...obj });
+        }
+
+        saveDB();
+        modal.remove();
+        renderRoute();
+        showToast(`Documento ${isEdit ? 'atualizado' : 'criado'} com sucesso!`, 'success');
+      };
+    }
+
+    window.editDocumento = (id) => showDocumentoModal(id);
+    window.deleteDocumento = (id) => {
+      if (!confirm('Deseja realmente excluir este documento?')) return;
+      DB.documentos = DB.documentos.filter(d => d.id !== id);
+      saveDB();
+      renderRoute();
+      showToast('Documento excluído com sucesso!', 'success');
+    };
+
+    /*********************
+     * MOTORISTAS & VEÍCULOS (Similar simplified patterns)
+     *********************/
+    async function renderMotoristas() {
+      const view = qs("#view");
+      view.innerHTML = `
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <button class="btn-modern btn-primary" id="btnNovoMotorista">
+              <i data-lucide="plus"></i>
+              Novo Motorista
+            </button>
+          </div>
+          <div class="toolbar-right">
+            <span class="badge-modern badge-primary">
+              <i data-lucide="users"></i>
+              ${DB.motoristas.length} motoristas
+            </span>
+          </div>
+        </div>
+
+        <div class="card-modern">
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>CPF</th>
+                  <th>CNH</th>
+                  <th class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${DB.motoristas.map(m => `
+                  <tr>
+                    <td><strong>${escapeHtml(m.nome)}</strong></td>
+                    <td>${escapeHtml(m.cpf)}</td>
+                    <td>${escapeHtml(m.cnh || '-')}</td>
+                    <td class="text-end">
+                      <button class="btn-modern btn-outline btn-sm" onclick="editMotorista('${m.id}')">
+                        <i data-lucide="edit-2"></i>
+                      </button>
+                      <button class="btn-modern btn-danger btn-sm" onclick="deleteMotorista('${m.id}')">
+                        <i data-lucide="trash-2"></i>
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      qs("#btnNovoMotorista").onclick = () => showMotoristaModal();
+    }
+
+    function showMotoristaModal(id = null) {
+      const motorista = id ? findById(DB.motoristas, id) : {};
+      const isEdit = !!id;
+
+      const modal = el(`
+        <div class="modal-overlay active">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title">${isEdit ? 'Editar' : 'Novo'} Motorista</h3>
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="formMotorista">
+                <div class="form-group">
+                  <label class="form-label">Nome *</label>
+                  <input type="text" class="form-control-modern" name="nome" value="${escapeHtml(motorista.nome || '')}" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">CPF *</label>
+                  <input type="text" class="form-control-modern" name="cpf" value="${escapeHtml(motorista.cpf || '')}" required>
+                </div>
+                <div class="form-group mb-0">
+                  <label class="form-label">CNH</label>
+                  <input type="text" class="form-control-modern" name="cnh" value="${escapeHtml(motorista.cnh || '')}">
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                Cancelar
+              </button>
+              <button class="btn-modern btn-primary" id="btnSaveMotorista">
+                <i data-lucide="save"></i>
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      `);
+
+      document.body.appendChild(modal);
+      lucide.createIcons();
+
+      qs("#btnSaveMotorista", modal).onclick = () => {
+        const form = qs("#formMotorista", modal);
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        const data = new FormData(form);
+        const obj = Object.fromEntries(data.entries());
+
+        if (isEdit) {
+          Object.assign(motorista, obj);
+        } else {
+          DB.motoristas.push({ id: uuid(), ...obj });
+        }
+
+        saveDB();
+        modal.remove();
+        renderRoute();
+        showToast(`Motorista ${isEdit ? 'atualizado' : 'criado'} com sucesso!`, 'success');
+      };
+    }
+
+    window.editMotorista = (id) => showMotoristaModal(id);
+    window.deleteMotorista = (id) => {
+      if (!confirm('Deseja realmente excluir este motorista?')) return;
+      DB.motoristas = DB.motoristas.filter(m => m.id !== id);
+      saveDB();
+      renderRoute();
+      showToast('Motorista excluído com sucesso!', 'success');
+    };
+
+    async function renderVeiculos() {
+      const view = qs("#view");
+      view.innerHTML = `
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <button class="btn-modern btn-primary" id="btnNovoVeiculo">
+              <i data-lucide="plus"></i>
+              Novo Veículo
+            </button>
+          </div>
+          <div class="toolbar-right">
+            <span class="badge-modern badge-primary">
+              <i data-lucide="car"></i>
+              ${DB.veiculos.length} veículos
+            </span>
+          </div>
+        </div>
+
+        <div class="card-modern">
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>Placa</th>
+                  <th>Modelo</th>
+                  <th>Ano</th>
+                  <th class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${DB.veiculos.map(v => `
+                  <tr>
+                    <td><strong>${escapeHtml(v.placa)}</strong></td>
+                    <td>${escapeHtml(v.modelo || '-')}</td>
+                    <td>${escapeHtml(v.ano || '-')}</td>
+                    <td class="text-end">
+                      <button class="btn-modern btn-outline btn-sm" onclick="editVeiculo('${v.id}')">
+                        <i data-lucide="edit-2"></i>
+                      </button>
+                      <button class="btn-modern btn-danger btn-sm" onclick="deleteVeiculo('${v.id}')">
+                        <i data-lucide="trash-2"></i>
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      qs("#btnNovoVeiculo").onclick = () => showVeiculoModal();
+    }
+
+    function showVeiculoModal(id = null) {
+      const veiculo = id ? findById(DB.veiculos, id) : {};
+      const isEdit = !!id;
+
+      const modal = el(`
+        <div class="modal-overlay active">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title">${isEdit ? 'Editar' : 'Novo'} Veículo</h3>
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="formVeiculo">
+                <div class="form-group">
+                  <label class="form-label">Placa *</label>
+                  <input type="text" class="form-control-modern" name="placa" value="${escapeHtml(veiculo.placa || '')}" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Modelo</label>
+                  <input type="text" class="form-control-modern" name="modelo" value="${escapeHtml(veiculo.modelo || '')}">
+                </div>
+                <div class="form-group mb-0">
+                  <label class="form-label">Ano</label>
+                  <input type="text" class="form-control-modern" name="ano" value="${escapeHtml(veiculo.ano || '')}">
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                Cancelar
+              </button>
+              <button class="btn-modern btn-primary" id="btnSaveVeiculo">
+                <i data-lucide="save"></i>
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      `);
+
+      document.body.appendChild(modal);
+      lucide.createIcons();
+
+      qs("#btnSaveVeiculo", modal).onclick = () => {
+        const form = qs("#formVeiculo", modal);
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        const data = new FormData(form);
+        const obj = Object.fromEntries(data.entries());
+
+        if (isEdit) {
+          Object.assign(veiculo, obj);
+        } else {
+          DB.veiculos.push({ id: uuid(), ...obj });
+        }
+
+        saveDB();
+        modal.remove();
+        renderRoute();
+        showToast(`Veículo ${isEdit ? 'atualizado' : 'criado'} com sucesso!`, 'success');
+      };
+    }
+
+    window.editVeiculo = (id) => showVeiculoModal(id);
+    window.deleteVeiculo = (id) => {
+      if (!confirm('Deseja realmente excluir este veículo?')) return;
+      DB.veiculos = DB.veiculos.filter(v => v.id !== id);
+      saveDB();
+      renderRoute();
+      showToast('Veículo excluído com sucesso!', 'success');
+    };
+
+    /*********************
+     * NOTAS FISCAIS (Functionality mantida, UI modernizada)
+     *********************/
+    async function renderNotas() {
+      const view = qs("#view");
+      const notasAbertas = DB.notas.filter(n => !n.finalizada_em);
+      const notasFinalizadas = DB.notas.filter(n => n.finalizada_em);
+
+      view.innerHTML = `
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <button class="btn-modern btn-primary" id="btnNovaNota">
+              <i data-lucide="plus"></i>
+              Nova Nota Fiscal
+            </button>
+          </div>
+          <div class="toolbar-right">
+            <span class="badge-modern badge-warning">
+              <i data-lucide="clock"></i>
+              ${notasAbertas.length} em andamento
+            </span>
+            <span class="badge-modern badge-success">
+              <i data-lucide="check-circle"></i>
+              ${notasFinalizadas.length} finalizadas
+            </span>
+          </div>
+        </div>
+
+        <div class="card-modern">
+          <h5 class="mb-3">Notas em Andamento</h5>
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>NF</th>
+                  <th>Combustível</th>
+                  <th>Empenho</th>
+                  <th class="text-end">Total</th>
+                  <th class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${notasAbertas.map(n => {
+                  const emp = findById(DB.documentos, n.empenho_id);
+                  return `
+                    <tr>
+                      <td><strong>${escapeHtml(n.numero_nf)}</strong></td>
+                      <td>${COMB_LABEL[n.combustivel]}</td>
+                      <td>${escapeHtml(emp?.numero || '-')}</td>
+                      <td class="text-end">${fmtBRL(n.valor_total)}</td>
+                      <td class="text-end">
+                        <button class="btn-modern btn-primary btn-sm" onclick="gerenciarNota('${n.id}')">
+                          <i data-lucide="edit"></i>
+                          Gerenciar
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('') || '<tr><td colspan="5" class="text-center text-secondary">Nenhuma nota em andamento</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card-modern mt-4">
+          <h5 class="mb-3">Notas Finalizadas</h5>
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>NF</th>
+                  <th>Combustível</th>
+                  <th>Empenho</th>
+                  <th>Finalizada em</th>
+                  <th class="text-end">Total</th>
+                  <th class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${notasFinalizadas.map(n => {
+                  const emp = findById(DB.documentos, n.empenho_id);
+                  return `
+                    <tr>
+                      <td><strong>${escapeHtml(n.numero_nf)}</strong></td>
+                      <td>${COMB_LABEL[n.combustivel]}</td>
+                      <td>${escapeHtml(emp?.numero || '-')}</td>
+                      <td>${n.finalizada_em ? isoToBR(n.finalizada_em.split('T')[0]) : '-'}</td>
+                      <td class="text-end">${fmtBRL(n.valor_total)}</td>
+                      <td class="text-end">
+                        <button class="btn-modern btn-outline btn-sm" onclick="printRelatorioByNF('${n.id}')">
+                          <i data-lucide="printer"></i>
+                        </button>
+                        <button class="btn-modern btn-danger btn-sm" onclick="deleteNota('${n.id}')">
+                          <i data-lucide="trash-2"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('') || '<tr><td colspan="6" class="text-center text-secondary">Nenhuma nota finalizada</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      qs("#btnNovaNota").onclick = () => showNotaModal();
+    }
+
+    function showNotaModal() {
+      const modal = el(`
+        <div class="modal-overlay active">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title">Nova Nota Fiscal</h3>
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="formNota">
+                <div class="form-group">
+                  <label class="form-label">Número NF *</label>
+                  <input type="text" class="form-control-modern" name="numero_nf" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Contrato *</label>
+                  <select class="form-control-modern" name="contrato_id" id="selContrato" required>
+                    <option value="">Selecione...</option>
+                    ${DB.contratos.map(c => `<option value="${c.id}">${escapeHtml(c.numero)}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Combustível *</label>
+                  <select class="form-control-modern" name="combustivel" id="selCombustivel" required>
+                    <option value="">Selecione...</option>
+                    ${Object.entries(COMB_LABEL).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="form-group mb-0">
+                  <label class="form-label">Empenho *</label>
+                  <select class="form-control-modern" name="empenho_id" id="selEmpenho" required disabled>
+                    <option value="">Primeiro selecione contrato e combustível</option>
+                  </select>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                Cancelar
+              </button>
+              <button class="btn-modern btn-primary" id="btnSaveNota">
+                <i data-lucide="save"></i>
+                Criar
+              </button>
+            </div>
+          </div>
+        </div>
+      `);
+
+      document.body.appendChild(modal);
+      lucide.createIcons();
+
+      // Filtrar empenhos baseado em contrato e combustível
+      const updateEmpenhos = () => {
+        const contratoId = qs("#selContrato", modal).value;
+        const combustivel = qs("#selCombustivel", modal).value;
+        const selEmp = qs("#selEmpenho", modal);
+
+        if (!contratoId || !combustivel) {
+          selEmp.disabled = true;
+          selEmp.innerHTML = '<option value="">Primeiro selecione contrato e combustível</option>';
+          return;
+        }
+
+        const empenhos = DB.documentos.filter(d => 
+          d.tipo_documento === DOC_TIPO.EMP && 
+          d.contrato_id === contratoId && 
+          d.combustivel === combustivel
+        );
+
+        selEmp.disabled = false;
+        selEmp.innerHTML = empenhos.length > 0
+          ? '<option value="">Selecione...</option>' + empenhos.map(e => 
+              `<option value="${e.id}">${escapeHtml(e.numero)} - Saldo: ${fmtBRL(e.saldo_atual)}</option>`
+            ).join('')
+          : '<option value="">Nenhum empenho disponível</option>';
+      };
+
+      qs("#selContrato", modal).onchange = updateEmpenhos;
+      qs("#selCombustivel", modal).onchange = updateEmpenhos;
+
+      qs("#btnSaveNota", modal).onclick = () => {
+        const form = qs("#formNota", modal);
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        const data = new FormData(form);
+        const obj = Object.fromEntries(data.entries());
+
+        const novaNota = {
+          id: uuid(),
+          ...obj,
+          valor_total: 0,
+          finalizada_em: null
+        };
+
+        DB.notas.push(novaNota);
+        saveDB();
+        modal.remove();
+        showToast('Nota fiscal criada com sucesso!', 'success');
+        gerenciarNota(novaNota.id);
+      };
+    }
+
+    window.gerenciarNota = (id) => {
+      location.hash = `#/notas`;
+      setTimeout(() => showGerenciarNotaModal(id), 100);
+    };
+
+    function showGerenciarNotaModal(notaId) {
+      const nota = findById(DB.notas, notaId);
+      if (!nota) return;
+
+      const itensNota = DB.itens.filter(it => it.nota_fiscal_id === notaId);
+      const totalNF = itensNota.reduce((sum, it) => sum + (it.valor_abastecimento || 0), 0);
+
+      const modal = el(`
+        <div class="modal-overlay active" style="align-items: flex-start; padding: 40px 0;">
+          <div class="modal-content" style="max-width: 1000px;">
+            <div class="modal-header">
+              <h3 class="modal-title">Gerenciar NF ${escapeHtml(nota.numero_nf)}</h3>
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <!-- Informações da NF -->
+              <div class="card-modern" style="background: var(--bg-primary); margin-bottom: 20px;">
+                <div class="row">
+                  <div class="col-md-6">
+                    <p class="mb-1"><strong>Combustível:</strong> ${COMB_LABEL[nota.combustivel]}</p>
+                    <p class="mb-0"><strong>Total NF:</strong> <span class="text-primary fw-bold">${fmtBRL(totalNF)}</span></p>
+                  </div>
+                  <div class="col-md-6 text-end">
+                    ${!nota.finalizada_em ? `
+                      <button class="btn-modern btn-success" id="btnFinalizarNF">
+                        <i data-lucide="check"></i>
+                        Finalizar NF
+                      </button>
+                    ` : `
+                      <span class="badge-modern badge-success">Finalizada em ${isoToBR(nota.finalizada_em.split('T')[0])}</span>
+                    `}
+                  </div>
+                </div>
+              </div>
+
+              ${!nota.finalizada_em ? `
+                <!-- Adicionar Abastecimento -->
+                <div class="card-modern" style="margin-bottom: 20px;">
+                  <h6 class="mb-3">Adicionar Abastecimento</h6>
+                  <form id="formAbastecimento" class="row g-3">
+                    <div class="col-md-3">
+                      <label class="form-label">Data *</label>
+                      <input type="date" class="form-control-modern" name="data_abastecimento" required>
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Hora</label>
+                      <input type="time" class="form-control-modern" name="hora">
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Veículo *</label>
+                      <select class="form-control-modern" name="veiculo_id" required>
+                        <option value="">Selecione...</option>
+                        ${DB.veiculos.map(v => `<option value="${v.id}">${escapeHtml(v.placa)}</option>`).join('')}
+                      </select>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Motorista *</label>
+                      <select class="form-control-modern" name="motorista_id" required>
+                        <option value="">Selecione...</option>
+                        ${DB.motoristas.map(m => `<option value="${m.id}">${escapeHtml(m.nome)}</option>`).join('')}
+                      </select>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Qtd Litros *</label>
+                      <input type="number" step="0.01" class="form-control-modern" name="qtd_litros" required>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Valor Unit (R$) *</label>
+                      <input type="number" step="0.001" class="form-control-modern" name="valor_unitario" required>
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">KM</label>
+                      <input type="number" class="form-control-modern" name="km">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Doc Abast.</label>
+                      <input type="text" class="form-control-modern" name="numero_doc">
+                    </div>
+                    <div class="col-12">
+                      <button type="submit" class="btn-modern btn-primary">
+                        <i data-lucide="plus"></i>
+                        Adicionar
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              ` : ''}
+
+              <!-- Lista de Abastecimentos -->
+              <div class="card-modern">
+                <h6 class="mb-3">Abastecimentos (${itensNota.length})</h6>
+                <div class="table-responsive">
+                  <table class="table-modern">
+                    <thead>
+                      <tr>
+                        <th>Data</th>
+                        <th>Placa</th>
+                        <th>Motorista</th>
+                        <th class="text-end">Litros</th>
+                        <th class="text-end">Valor Unit</th>
+                        <th class="text-end">Total</th>
+                        ${!nota.finalizada_em ? '<th class="text-end">Ações</th>' : ''}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${itensNota.map(it => {
+                        const v = findById(DB.veiculos, it.veiculo_id);
+                        const m = findById(DB.motoristas, it.motorista_id);
+                        return `
+                          <tr>
+                            <td>${isoToBR(it.data_abastecimento)} ${it.hora || ''}</td>
+                            <td>${escapeHtml(v?.placa || '-')}</td>
+                            <td>${escapeHtml(m?.nome || '-')}</td>
+                            <td class="text-end">${fmtNum(it.qtd_litros)}</td>
+                            <td class="text-end">${fmtBRL(it.valor_unitario)}</td>
+                            <td class="text-end">${fmtBRL(it.valor_abastecimento)}</td>
+                            ${!nota.finalizada_em ? `
+                              <td class="text-end">
+                                <button class="btn-modern btn-danger btn-sm" onclick="deleteAbastecimento('${it.id}', '${notaId}')">
+                                  <i data-lucide="trash-2"></i>
+                                </button>
+                              </td>
+                            ` : ''}
+                          </tr>
+                        `;
+                      }).join('') || '<tr><td colspan="7" class="text-center text-secondary">Nenhum abastecimento</td></tr>'}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colspan="${!nota.finalizada_em ? 6 : 5}" class="text-end"><strong>TOTAL NF:</strong></td>
+                        <td class="text-end"><strong>${fmtBRL(totalNF)}</strong></td>
+                        ${!nota.finalizada_em ? '<td></td>' : ''}
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `);
+
+      document.body.appendChild(modal);
+      lucide.createIcons();
+
+      if (!nota.finalizada_em) {
+        // Form submit handler
+        qs("#formAbastecimento", modal).onsubmit = (e) => {
+          e.preventDefault();
+          const form = e.target;
+          const data = new FormData(form);
+          const obj = Object.fromEntries(data.entries());
+
+          const qtd = parseFloat(obj.qtd_litros);
+          const vUnit = parseFloat(obj.valor_unitario);
+
+          const novoItem = {
+            id: uuid(),
+            nota_fiscal_id: notaId,
+            produto: nota.combustivel,
+            ...obj,
+            qtd_litros: qtd,
+            valor_unitario: vUnit,
+            valor_abastecimento: qtd * vUnit
+          };
+
+          DB.itens.push(novoItem);
+          saveDB();
+          modal.remove();
+          showToast('Abastecimento adicionado!', 'success');
+          gerenciarNota(notaId);
+        };
+
+        // Finalizar NF
+        const btnFinalizar = qs("#btnFinalizarNF", modal);
+        if (btnFinalizar) {
+          btnFinalizar.onclick = () => {
+            if (itensNota.length === 0) {
+              showToast('Adicione ao menos 1 abastecimento antes de finalizar!', 'danger');
+              return;
+            }
+
+            if (!confirm('Deseja finalizar esta NF? Não será mais possível adicionar abastecimentos.')) return;
+
+            nota.finalizada_em = new Date().toISOString();
+            nota.valor_total = totalNF;
+
+            // Atualizar saldo do empenho
+            const emp = findById(DB.documentos, nota.empenho_id);
+            if (emp) {
+              emp.saldo_atual -= totalNF;
+            }
+
+            saveDB();
+            modal.remove();
+            renderRoute();
+            showToast('Nota fiscal finalizada com sucesso!', 'success');
+          };
+        }
+      }
+    }
+
+    window.deleteAbastecimento = (itemId, notaId) => {
+      if (!confirm('Deseja realmente excluir este abastecimento?')) return;
+      DB.itens = DB.itens.filter(it => it.id !== itemId);
+      saveDB();
+      showToast('Abastecimento excluído!', 'success');
+      
+      // Reabrir modal atualizado
+      const modal = document.querySelector('.modal-overlay');
+      if (modal) modal.remove();
+      gerenciarNota(notaId);
+    };
+
+    window.deleteNota = (id) => {
+      if (!confirm('Deseja realmente excluir esta nota fiscal?')) return;
+      
+      // Remover itens relacionados
+      DB.itens = DB.itens.filter(it => it.nota_fiscal_id !== id);
+      DB.notas = DB.notas.filter(n => n.id !== id);
+      
+      saveDB();
+      renderRoute();
+      showToast('Nota fiscal excluída!', 'success');
+    };
+
+    /*********************
+     * HISTÓRICO
+     *********************/
+    async function renderHistorico() {
+      const view = qs("#view");
+      const itens = DB.itens.slice().sort((a, b) => 
+        ((b.data_abastecimento || "") + (b.hora || "")).localeCompare((a.data_abastecimento || "") + (a.hora || ""))
+      );
+
+      view.innerHTML = `
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <h5 class="mb-0">Histórico Completo</h5>
+          </div>
+          <div class="toolbar-right">
+            <span class="badge-modern badge-primary">
+              <i data-lucide="fuel"></i>
+              ${itens.length} abastecimentos
+            </span>
+          </div>
+        </div>
+
+        <div class="card-modern">
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>Data/Hora</th>
+                  <th>NF</th>
+                  <th>Combustível</th>
+                  <th>Placa</th>
+                  <th>Motorista</th>
+                  <th class="text-end">Litros</th>
+                  <th class="text-end">Valor</th>
+                  <th class="text-end">KM</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itens.map(it => {
+                  const nf = findById(DB.notas, it.nota_fiscal_id);
+                  const v = findById(DB.veiculos, it.veiculo_id);
+                  const m = findById(DB.motoristas, it.motorista_id);
+                  return `
+                    <tr>
+                      <td>${isoToBR(it.data_abastecimento)} ${it.hora || ''}</td>
+                      <td><strong>${escapeHtml(nf?.numero_nf || '-')}</strong></td>
+                      <td>
+                        <span class="badge-modern badge-primary">
+                          ${COMB_LABEL[it.produto] || it.produto}
+                        </span>
+                      </td>
+                      <td>${escapeHtml(v?.placa || '-')}</td>
+                      <td>${escapeHtml(m?.nome || '-')}</td>
+                      <td class="text-end">${fmtNum(it.qtd_litros)}</td>
+                      <td class="text-end">${fmtBRL(it.valor_abastecimento)}</td>
+                      <td class="text-end">${it.km || '-'}</td>
+                    </tr>
+                  `;
+                }).join('') || '<tr><td colspan="8" class="text-center text-secondary">Nenhum abastecimento registrado</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    /*********************
+     * RELATÓRIOS
+     *********************/
+    async function renderRelatorios() {
+      const view = qs("#view");
+      view.innerHTML = `
+        <div class="toolbar">
+          <h5 class="mb-0">Central de Relatórios</h5>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-md-4">
+            <div class="card-modern">
+              <div style="margin-bottom: 16px;">
+                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                  <i data-lucide="file-bar-chart" style="width: 24px; height: 24px; color: white;"></i>
+                </div>
+                <h5>Administrativo Mensal</h5>
+                <p class="text-secondary small">Resumo completo por contrato/fornecedor</p>
+              </div>
+              <select class="form-control-modern mb-3" id="rel_adm_contrato">
+                ${DB.contratos.map(c => {
+                  const f = findById(DB.fornecedores, c.fornecedor_id);
+                  return `<option value="${c.id}">${escapeHtml(c.numero)} - ${escapeHtml(f?.razao_social || '')}</option>`;
+                }).join('')}
+              </select>
+              <button class="btn-modern btn-primary w-100" id="btnRelAdm">
+                <i data-lucide="printer"></i>
+                Gerar Relatório
+              </button>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card-modern">
+              <div style="margin-bottom: 16px;">
+                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--success) 0%, #059669 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                  <i data-lucide="folder" style="width: 24px; height: 24px; color: white;"></i>
+                </div>
+                <h5>Por Empenho</h5>
+                <p class="text-secondary small">Todos os abastecimentos de um empenho</p>
+              </div>
+              <select class="form-control-modern mb-3" id="rel_emp_doc">
+                ${DB.documentos.filter(d => d.tipo_documento === DOC_TIPO.EMP).map(d => 
+                  `<option value="${d.id}">${escapeHtml(d.numero)} (${COMB_LABEL[d.combustivel]})</option>`
+                ).join('')}
+              </select>
+              <button class="btn-modern btn-success w-100" id="btnRelEmp">
+                <i data-lucide="printer"></i>
+                Gerar Relatório
+              </button>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card-modern">
+              <div style="margin-bottom: 16px;">
+                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                  <i data-lucide="file-text" style="width: 24px; height: 24px; color: white;"></i>
+                </div>
+                <h5>Conferência de NF</h5>
+                <p class="text-secondary small">Relatório detalhado para auditoria</p>
+              </div>
+              <select class="form-control-modern mb-3" id="rel_nf_doc">
+                ${DB.notas.filter(n => n.finalizada_em).map(n => 
+                  `<option value="${n.id}">NF ${escapeHtml(n.numero_nf)} - ${COMB_LABEL[n.combustivel]}</option>`
+                ).join('')}
+              </select>
+              <button class="btn-modern btn-primary w-100" style="background: var(--warning);" id="btnRelNF">
+                <i data-lucide="printer"></i>
+                Gerar Relatório
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      qs("#btnRelAdm").onclick = () => printRelAdm(qs("#rel_adm_contrato").value);
+      qs("#btnRelEmp").onclick = () => printRelEmp(qs("#rel_emp_doc").value);
+      qs("#btnRelNF").onclick = () => printRelatorioByNF(qs("#rel_nf_doc").value);
+    }
+
+    // Funções de impressão (mantidas do original)
+    function printRelAdm(contratoId) {
+      const c = findById(DB.contratos, contratoId);
+      if (!c) return;
+      const fornecedor = findById(DB.fornecedores, c.fornecedor_id);
+      const notas = DB.notas.filter(n => n.contrato_id === contratoId && n.finalizada_em);
+
+      const porComb = {};
+      notas.forEach(n => {
+        const itensNF = DB.itens.filter(it => it.nota_fiscal_id === n.id);
+        if (!porComb[n.combustivel]) porComb[n.combustivel] = [];
+        porComb[n.combustivel].push(...itensNF);
+      });
+
+      const printRoot = qs("#printRoot");
+      let html = `
+        <div class="rpt">
+          <div class="logo-box"><img src="https://advantagemidia.com/wp-content/uploads/2026/01/WhatsApp-Image-2026-01-15-at-10.31.14.jpeg" alt="Logo"></div>
+          <div class="title">RELATÓRIO ADMINISTRATIVO ANALÍTICO - TODOS OS ABASTECIMENTOS</div>
+          <div class="box">
+            <div class="box-title">DADOS DO CONTRATO</div>
+            <table class="kv">
+              <tr><td class="k">CONTRATO:</td><td>${escapeHtml(c.numero)}</td></tr>
+              <tr><td class="k">FORNECEDOR:</td><td>${escapeHtml(fornecedor?.razao_social || '')}</td></tr>
+              <tr><td class="k">OBJETO:</td><td>${escapeHtml(c.objeto)}</td></tr>
+            </table>
+          </div>
+      `;
+
+      for (const comb in porComb) {
+        const itens = porComb[comb].sort((a, b) => (a.data_abastecimento + a.hora).localeCompare(b.data_abastecimento + b.hora));
+        const totalLit = itens.reduce((s, x) => s + (x.qtd_litros || 0), 0);
+        const totalVal = itens.reduce((s, x) => s + (x.valor_abastecimento || 0), 0);
+
+        html += `
+          <div class="section-title">DETALHAMENTO: ${COMB_LABEL[comb]}</div>
+          <table class="items">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>NF</th>
+                <th>Placa</th>
+                <th>Doc. Abast.</th>
+                <th class="text-end">Litros</th>
+                <th class="text-end">V. Unit</th>
+                <th class="text-end">Total</th>
+                <th>Motorista</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itens.map(it => {
+                const nf = findById(DB.notas, it.nota_fiscal_id);
+                const v = findById(DB.veiculos, it.veiculo_id);
+                const m = findById(DB.motoristas, it.motorista_id);
+                return `
+                  <tr>
+                    <td>${isoToBR(it.data_abastecimento)} ${it.hora || ""}</td>
+                    <td>${escapeHtml(nf?.numero_nf || "")}</td>
+                    <td>${escapeHtml(v?.placa || "")}</td>
+                    <td>${escapeHtml(it.numero_doc || "")}</td>
+                    <td class="text-end">${fmtNum(it.qtd_litros)}</td>
+                    <td class="text-end">${fmtBRL(it.valor_unitario)}</td>
+                    <td class="text-end">${fmtBRL(it.valor_abastecimento)}</td>
+                    <td>${escapeHtml(m?.nome || "")}</td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4" class="text-end"><b>Subtotal ${COMB_LABEL[comb]}</b></td>
+                <td class="text-end"><b>${fmtNum(totalLit)} L</b></td>
+                <td></td>
+                <td class="text-end"><b>${fmtBRL(totalVal)}</b></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+          <br>
+        `;
+      }
+
+      html += `</div>`;
+      printRoot.innerHTML = html;
+      window.print();
+    }
+
+    function printRelEmp(empId) {
+      const d = findById(DB.documentos, empId);
+      if (!d) return;
+      const c = findById(DB.contratos, d.contrato_id);
+      const notas = DB.notas.filter(n => n.empenho_id === empId && n.finalizada_em);
+      const itens = DB.itens.filter(it => notas.some(n => n.id === it.nota_fiscal_id));
+
+      const printRoot = qs("#printRoot");
+      printRoot.innerHTML = `
+        <div class="rpt">
+          <div class="logo-box"><img src="https://advantagemidia.com/wp-content/uploads/2026/01/WhatsApp-Image-2026-01-15-at-10.31.14.jpeg" alt="Logo"></div>
+          <div class="title">RELATÓRIO POR EMPENHO</div>
+          <div class="box">
+            <table class="kv">
+              <tr><td class="k">EMPENHO Nº:</td><td>${escapeHtml(d.numero)}</td></tr>
+              <tr><td class="k">CONTRATO:</td><td>${escapeHtml(c?.numero || '')}</td></tr>
+              <tr><td class="k">COMBUSTÍVEL:</td><td>${COMB_LABEL[d.combustivel]}</td></tr>
+              <tr><td class="k">SALDO ATUAL:</td><td>${fmtBRL(d.saldo_atual)}</td></tr>
+            </table>
+          </div>
+          <table class="items">
+            <thead>
+              <tr><th>Data</th><th>NF</th><th>Placa</th><th class="text-end">Litros</th><th class="text-end">Valor</th></tr>
+            </thead>
+            <tbody>
+              ${itens.map(it => {
+                const nf = findById(DB.notas, it.nota_fiscal_id);
+                const v = findById(DB.veiculos, it.veiculo_id);
+                return `<tr><td>${isoToBR(it.data_abastecimento)}</td><td>${escapeHtml(nf?.numero_nf || '')}</td><td>${escapeHtml(v?.placa || '')}</td><td class="text-end">${fmtNum(it.qtd_litros)}</td><td class="text-end">${fmtBRL(it.valor_abastecimento)}</td></tr>`;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+      window.print();
+    }
+
+    window.printRelatorioByNF = (nfId) => {
+      const nf = findById(DB.notas, nfId);
+      if (!nf) return;
+      
+      const emp = findById(DB.documentos, nf.empenho_id);
+      const c = findById(DB.contratos, nf.contrato_id);
+      const f = findById(DB.fornecedores, c?.fornecedor_id);
+      const itens = DB.itens.filter(it => it.nota_fiscal_id === nfId);
+
+      const printRoot = qs("#printRoot");
+      printRoot.innerHTML = `
+        <div class="rpt">
+          <div class="logo-box"><img src="https://advantagemidia.com/wp-content/uploads/2026/01/WhatsApp-Image-2026-01-15-at-10.31.14.jpeg" alt="Logo"></div>
+          <div class="title">RELATÓRIO DETALHADO PARA CONFERÊNCIA DE NOTA FISCAL</div>
+          
+          <div class="box">
+            <div class="box-title">DADOS DA NOTA FISCAL</div>
+            <table class="kv">
+              <tr><td class="k">NOTA FISCAL Nº:</td><td>${escapeHtml(nf.numero_nf)}</td></tr>
+              <tr><td class="k">COMBUSTÍVEL:</td><td>${COMB_LABEL[nf.combustivel]}</td></tr>
+              <tr><td class="k">VALOR TOTAL NF:</td><td>${fmtBRL(nf.valor_total)}</td></tr>
+            </table>
+          </div>
+
+          <div class="box">
+            <div class="box-title">DADOS DO CONTRATO / FORNECEDOR</div>
+            <table class="kv">
+              <tr><td class="k">CONTRATO:</td><td>${escapeHtml(c?.numero || '')}</td></tr>
+              <tr><td class="k">FORNECEDOR:</td><td>${escapeHtml(f?.razao_social || '')}</td></tr>
+              <tr><td class="k">EMPENHO:</td><td>${escapeHtml(emp?.numero || '')}</td></tr>
+            </table>
+          </div>
+
+          <div class="section-title">DETALHAMENTO DOS ABASTECIMENTOS</div>
+          <table class="items">
+            <thead>
+              <tr>
+                <th>Data/Hora</th>
+                <th>Placa</th>
+                <th>Motorista</th>
+                <th>Doc Abast.</th>
+                <th class="text-end">Litros</th>
+                <th class="text-end">V. Unit</th>
+                <th class="text-end">Total</th>
+                <th class="text-end">KM</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itens.map(it => {
+                const v = findById(DB.veiculos, it.veiculo_id);
+                const m = findById(DB.motoristas, it.motorista_id);
+                return `
+                  <tr>
+                    <td>${isoToBR(it.data_abastecimento)} ${it.hora || ""}</td>
+                    <td>${escapeHtml(v?.placa || "")}</td>
+                    <td>${escapeHtml(m?.nome || "")}</td>
+                    <td>${escapeHtml(it.numero_doc || "")}</td>
+                    <td class="text-end">${fmtNum(it.qtd_litros)}</td>
+                    <td class="text-end">${fmtBRL(it.valor_unitario)}</td>
+                    <td class="text-end">${fmtBRL(it.valor_abastecimento)}</td>
+                    <td class="text-end">${it.km || ""}</td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4" class="text-end"><b>TOTAL GERAL</b></td>
+                <td class="text-end"><b>${fmtNum(itens.reduce((s, x) => s + (x.qtd_litros || 0), 0))} L</b></td>
+                <td></td>
+                <td class="text-end"><b>${fmtBRL(itens.reduce((s, x) => s + (x.valor_abastecimento || 0), 0))}</b></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      `;
+      window.print();
+    };
+
+    /*********************
+     * IMPORT/EXPORT
+     *********************/
+    async function renderImportExport() {
+      const view = qs("#view");
+      view.innerHTML = `
+        <div class="toolbar">
+          <h5 class="mb-0">Backup e Restauração</h5>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="card-modern">
+              <div style="margin-bottom: 16px;">
+                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--success) 0%, #059669 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                  <i data-lucide="download" style="width: 24px; height: 24px; color: white;"></i>
+                </div>
+                <h5>Exportar Dados</h5>
+                <p class="text-secondary">Faça backup de todos os dados do sistema em formato JSON.</p>
+              </div>
+              <button class="btn-modern btn-success w-100" id="btnExport">
+                <i data-lucide="download"></i>
+                Exportar Backup
+              </button>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card-modern">
+              <div style="margin-bottom: 16px;">
+                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                  <i data-lucide="upload" style="width: 24px; height: 24px; color: white;"></i>
+                </div>
+                <h5>Importar Dados</h5>
+                <p class="text-secondary">Restaure dados de um arquivo de backup anterior.</p>
+              </div>
+              <input type="file" accept=".json" id="fileImport" class="form-control-modern mb-3">
+              <button class="btn-modern btn-primary w-100" id="btnImport">
+                <i data-lucide="upload"></i>
+                Importar Backup
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-modern mt-4" style="background: rgba(239, 68, 68, 0.05); border-color: var(--danger);">
+          <h6 class="text-danger mb-2">
+            <i data-lucide="alert-triangle"></i>
+            Atenção
+          </h6>
+          <p class="mb-0 text-secondary small">A importação de dados substituirá completamente os dados atuais do sistema. Certifique-se de fazer um backup antes de importar.</p>
+        </div>
+      `;
+
+      lucide.createIcons();
+
+      qs("#btnExport").onclick = () => {
+        const dataStr = JSON.stringify(DB, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `backup-combustivel-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Backup exportado com sucesso!', 'success');
+      };
+
+      qs("#btnImport").onclick = () => {
+        const file = qs("#fileImport").files[0];
+        if (!file) {
+          showToast('Selecione um arquivo para importar!', 'danger');
+          return;
+        }
+
+        if (!confirm('ATENÇÃO: Esta ação substituirá todos os dados atuais. Deseja continuar?')) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            Object.assign(DB, data);
+            saveDB();
+            showToast('Dados importados com sucesso!', 'success');
+            setTimeout(() => location.reload(), 1000);
+          } catch (err) {
+            showToast('Erro ao importar arquivo. Verifique o formato.', 'danger');
+          }
+        };
+        reader.readAsText(file);
+      };
+    }
 
     /*********************
      * INITIALIZATION
      *********************/
     (async function init() {
-      try {
-        await loadDB();
-
-        // Mobile menu
-        const btnMenu = qs("#btnMobileMenu");
-        const sidebar = qs("#sidebar");
-
-        function checkMobile() {
-          if (window.innerWidth <= 768) {
-            btnMenu.style.display = "flex";
-          } else {
-            btnMenu.style.display = "none";
-            sidebar.classList.remove("mobile-open");
-          }
+      await loadDB();
+      
+      // Mobile menu toggle
+      const btnMenu = qs("#btnMobileMenu");
+      const sidebar = qs("#sidebar");
+      
+      function checkMobile() {
+        if (window.innerWidth <= 768) {
+          btnMenu.style.display = "flex";
+        } else {
+          btnMenu.style.display = "none";
+          sidebar.classList.remove("mobile-open");
         }
-
-        btnMenu.onclick = () => {
-          sidebar.classList.toggle("mobile-open");
-        };
-
-        window.addEventListener("resize", checkMobile);
-        checkMobile();
-
-        // Hide loading screen
-        qs("#loadingScreen").classList.add("hidden");
-
-        // Default route
-        if (!location.hash) location.hash = "#/dashboard";
-        await renderRoute();
-      } catch (error) {
-        console.error('Erro na inicialização:', error);
-        showToast('Erro ao inicializar sistema', 'danger');
       }
+
+      btnMenu.onclick = () => {
+        sidebar.classList.toggle("mobile-open");
+      };
+
+      window.addEventListener("resize", checkMobile);
+      checkMobile();
+
+      // Default route
+      if (!location.hash) location.hash = "#/dashboard";
+      await renderRoute();
     })();
   </script>
 </body>
-
 </html>
