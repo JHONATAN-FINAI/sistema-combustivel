@@ -785,6 +785,10 @@
             <i data-lucide="file-signature"></i>
             Contratos
           </a>
+          <a href="#/atas" class="nav-link">
+            <i data-lucide="file-check"></i>
+            Atas de Preços
+          </a>
           <a href="#/documentos" class="nav-link">
             <i data-lucide="folder"></i>
             Empenhos & AFTs
@@ -933,6 +937,7 @@
     const DB = {
       fornecedores: [],
       contratos: [],
+      atas: [],
       documentos: [],
       motoristas: [],
       veiculos: [],
@@ -971,6 +976,7 @@
         relatorios: "Relatórios",
         fornecedores: "Fornecedores",
         contratos: "Contratos",
+        atas: "Atas de Registro de Preços",
         documentos: "Empenhos & AFTs",
         motoristas: "Motoristas",
         veiculos: "Veículos",
@@ -983,6 +989,7 @@
         dashboard: renderDashboard,
         fornecedores: renderFornecedores,
         contratos: renderContratos,
+        atas: renderAtas,
         documentos: renderDocumentos,
         motoristas: renderMotoristas,
         veiculos: renderVeiculos,
@@ -1412,6 +1419,152 @@
     };
 
     /*********************
+     * ATAS DE REGISTRO DE PREÇOS
+     *********************/
+    async function renderAtas() {
+      const view = qs("#view");
+      view.innerHTML = `
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <button class="btn-modern btn-primary" id="btnNovaAta">
+              <i data-lucide="plus"></i>
+              Nova Ata
+            </button>
+          </div>
+          <div class="toolbar-right">
+            <span class="badge-modern badge-primary">
+              <i data-lucide="file-check"></i>
+              ${DB.atas.length} atas
+            </span>
+          </div>
+        </div>
+
+        <div class="card-modern">
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>Número</th>
+                  <th>Fornecedor</th>
+                  <th>Objeto</th>
+                  <th class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${DB.atas.map(a => {
+                  const fornecedor = findById(DB.fornecedores, a.fornecedor_id);
+                  return `
+                    <tr>
+                      <td><strong>${escapeHtml(a.numero)}</strong></td>
+                      <td>${escapeHtml(fornecedor?.razao_social || '-')}</td>
+                      <td>${escapeHtml(a.objeto)}</td>
+                      <td class="text-end">
+                        <button class="btn-modern btn-outline btn-sm" onclick="editAta('${a.id}')">
+                          <i data-lucide="edit-2"></i>
+                        </button>
+                        <button class="btn-modern btn-danger btn-sm" onclick="deleteAta('${a.id}')">
+                          <i data-lucide="trash-2"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      qs("#btnNovaAta").onclick = () => showAtaModal();
+    }
+
+    function showAtaModal(id = null) {
+      const ata = id ? findById(DB.atas, id) : {};
+      const isEdit = !!id;
+
+      const modal = el(`
+        <div class="modal-overlay active">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title">${isEdit ? 'Editar' : 'Nova'} Ata de Registro de Preços</h3>
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="formAta">
+                <div class="form-group">
+                  <label class="form-label">Número da Ata *</label>
+                  <input type="text" class="form-control-modern" name="numero" value="${escapeHtml(ata.numero || '')}" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Fornecedor *</label>
+                  <select class="form-control-modern" name="fornecedor_id" required>
+                    <option value="">Selecione...</option>
+                    ${DB.fornecedores.map(f => `
+                      <option value="${f.id}" ${ata.fornecedor_id === f.id ? 'selected' : ''}>
+                        ${escapeHtml(f.razao_social)}
+                      </option>
+                    `).join('')}
+                  </select>
+                </div>
+                <div class="form-group mb-0">
+                  <label class="form-label">Objeto *</label>
+                  <textarea class="form-control-modern" name="objeto" rows="3" required>${escapeHtml(ata.objeto || '')}</textarea>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                Cancelar
+              </button>
+              <button class="btn-modern btn-primary" id="btnSaveAta">
+                <i data-lucide="save"></i>
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      `);
+
+      document.body.appendChild(modal);
+      lucide.createIcons();
+
+      qs("#btnSaveAta", modal).onclick = () => {
+        const form = qs("#formAta", modal);
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        const data = Object.fromEntries(new FormData(form).entries());
+        
+        if (isEdit) {
+          const index = DB.atas.findIndex(a => a.id === id);
+          if (index !== -1) {
+            DB.atas[index] = { ...DB.atas[index], ...data };
+          }
+        } else {
+          DB.atas.push({ id: uuid(), ...data });
+        }
+
+        saveDB();
+        modal.remove();
+        renderRoute();
+        showToast(`Ata ${isEdit ? 'atualizada' : 'cadastrada'} com sucesso!`, 'success');
+      };
+    }
+
+    window.editAta = (id) => showAtaModal(id);
+    window.deleteAta = (id) => {
+      if (!confirm('Deseja realmente excluir esta ata?')) return;
+      DB.atas = DB.atas.filter(a => a.id !== id);
+      saveDB();
+      renderRoute();
+      showToast('Ata excluída com sucesso!', 'success');
+    };
+
+    /*********************
      * DOCUMENTOS (Simplified - Similar pattern)
      *********************/
     async function renderDocumentos() {
@@ -1439,28 +1592,47 @@
                 <tr>
                   <th>Tipo</th>
                   <th>Número</th>
+                  <th>Vínculo</th>
                   <th>Combustível</th>
                   <th class="text-end">Saldo</th>
                   <th class="text-end">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                ${DB.documentos.map(d => `
-                  <tr>
-                    <td><span class="badge-modern ${d.tipo_documento === DOC_TIPO.EMP ? 'badge-primary' : 'badge-warning'}">${d.tipo_documento}</span></td>
-                    <td><strong>${escapeHtml(d.numero)}</strong></td>
-                    <td>${COMB_LABEL[d.combustivel]}</td>
-                    <td class="text-end">${fmtBRL(d.saldo_atual)}</td>
-                    <td class="text-end">
-                      <button class="btn-modern btn-outline btn-sm" onclick="editDocumento('${d.id}')">
-                        <i data-lucide="edit-2"></i>
-                      </button>
-                      <button class="btn-modern btn-danger btn-sm" onclick="deleteDocumento('${d.id}')">
-                        <i data-lucide="trash-2"></i>
-                      </button>
-                    </td>
-                  </tr>
-                `).join('')}
+                ${DB.documentos.map(d => {
+                  // Compatibilidade: se tiver contrato_id mas não tipo_vinculo, assumir CONTRATO
+                  if (d.contrato_id && !d.tipo_vinculo) {
+                    d.tipo_vinculo = 'CONTRATO';
+                    d.vinculo_id = d.contrato_id;
+                  }
+                  
+                  let vinculoInfo = '-';
+                  if (d.tipo_vinculo === 'CONTRATO') {
+                    const contrato = findById(DB.contratos, d.vinculo_id || d.contrato_id);
+                    vinculoInfo = contrato ? `<small>Contrato</small><br>${escapeHtml(contrato.numero)}` : '-';
+                  } else if (d.tipo_vinculo === 'ATA') {
+                    const ata = findById(DB.atas, d.vinculo_id);
+                    vinculoInfo = ata ? `<small>Ata</small><br>${escapeHtml(ata.numero)}` : '-';
+                  }
+                  
+                  return `
+                    <tr>
+                      <td><span class="badge-modern ${d.tipo_documento === DOC_TIPO.EMP ? 'badge-primary' : 'badge-warning'}">${d.tipo_documento}</span></td>
+                      <td><strong>${escapeHtml(d.numero)}</strong></td>
+                      <td>${vinculoInfo}</td>
+                      <td>${COMB_LABEL[d.combustivel]}</td>
+                      <td class="text-end">${fmtBRL(d.saldo_atual)}</td>
+                      <td class="text-end">
+                        <button class="btn-modern btn-outline btn-sm" onclick="editDocumento('${d.id}')">
+                          <i data-lucide="edit-2"></i>
+                        </button>
+                        <button class="btn-modern btn-danger btn-sm" onclick="deleteDocumento('${d.id}')">
+                          <i data-lucide="trash-2"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
               </tbody>
             </table>
           </div>
@@ -1497,14 +1669,16 @@
                   <input type="text" class="form-control-modern" name="numero" value="${escapeHtml(doc.numero || '')}" required>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Contrato *</label>
-                  <select class="form-control-modern" name="contrato_id" required>
+                  <label class="form-label">Vincular a *</label>
+                  <select class="form-control-modern" id="tipoVinculo" name="tipo_vinculo" required>
+                    <option value="CONTRATO" ${doc.tipo_vinculo === 'CONTRATO' ? 'selected' : ''}>Contrato</option>
+                    <option value="ATA" ${doc.tipo_vinculo === 'ATA' ? 'selected' : ''}>Ata de Preços</option>
+                  </select>
+                </div>
+                <div class="form-group" id="grupoVinculo">
+                  <label class="form-label" id="labelVinculo">Contrato *</label>
+                  <select class="form-control-modern" id="selectVinculo" name="vinculo_id" required>
                     <option value="">Selecione...</option>
-                    ${DB.contratos.map(c => `
-                      <option value="${c.id}" ${doc.contrato_id === c.id ? 'selected' : ''}>
-                        ${escapeHtml(c.numero)}
-                      </option>
-                    `).join('')}
                   </select>
                 </div>
                 <div class="form-group">
@@ -1536,6 +1710,41 @@
 
       document.body.appendChild(modal);
       lucide.createIcons();
+
+      // Função para atualizar dropdown de vínculo
+      const atualizarVinculo = () => {
+        const tipoVinculo = qs("#tipoVinculo", modal).value;
+        const selectVinculo = qs("#selectVinculo", modal);
+        const labelVinculo = qs("#labelVinculo", modal);
+        
+        if (tipoVinculo === 'CONTRATO') {
+          labelVinculo.textContent = 'Contrato *';
+          selectVinculo.innerHTML = '<option value="">Selecione...</option>' +
+            DB.contratos.map(c => `
+              <option value="${c.id}" ${doc.vinculo_id === c.id || doc.contrato_id === c.id ? 'selected' : ''}>
+                ${escapeHtml(c.numero)}
+              </option>
+            `).join('');
+        } else {
+          labelVinculo.textContent = 'Ata de Preços *';
+          selectVinculo.innerHTML = '<option value="">Selecione...</option>' +
+            DB.atas.map(a => `
+              <option value="${a.id}" ${doc.vinculo_id === a.id ? 'selected' : ''}>
+                ${escapeHtml(a.numero)}
+              </option>
+            `).join('');
+        }
+      };
+
+      // Popular inicial
+      if (!doc.tipo_vinculo && doc.contrato_id) {
+        doc.tipo_vinculo = 'CONTRATO';
+        doc.vinculo_id = doc.contrato_id;
+      }
+      atualizarVinculo();
+
+      // Atualizar quando mudar tipo
+      qs("#tipoVinculo", modal).onchange = atualizarVinculo;
 
       qs("#btnSaveDoc", modal).onclick = () => {
         const form = qs("#formDoc", modal);
@@ -2522,7 +2731,25 @@
     function printRelEmp(empId) {
       const d = findById(DB.documentos, empId);
       if (!d) return;
-      const c = findById(DB.contratos, d.contrato_id);
+      
+      // Compatibilidade: converter contrato_id antigo para novo formato
+      if (d.contrato_id && !d.tipo_vinculo) {
+        d.tipo_vinculo = 'CONTRATO';
+        d.vinculo_id = d.contrato_id;
+      }
+      
+      // Buscar vínculo correto
+      let vinculo = null;
+      let vinculoLabel = 'CONTRATO';
+      
+      if (d.tipo_vinculo === 'ATA') {
+        vinculo = findById(DB.atas, d.vinculo_id);
+        vinculoLabel = 'ATA';
+      } else {
+        vinculo = findById(DB.contratos, d.vinculo_id || d.contrato_id);
+        vinculoLabel = 'CONTRATO';
+      }
+      
       const notas = DB.notas.filter(n => n.empenho_id === empId && n.finalizada_em);
       const itens = DB.itens.filter(it => notas.some(n => n.id === it.nota_fiscal_id));
 
@@ -2534,7 +2761,7 @@
           <div class="box">
             <table class="kv">
               <tr><td class="k">EMPENHO Nº:</td><td>${escapeHtml(d.numero)}</td></tr>
-              <tr><td class="k">CONTRATO:</td><td>${escapeHtml(c?.numero || '')}</td></tr>
+              <tr><td class="k">${vinculoLabel}:</td><td>${escapeHtml(vinculo?.numero || '')}</td></tr>
               <tr><td class="k">COMBUSTÍVEL:</td><td>${COMB_LABEL[d.combustivel]}</td></tr>
               <tr><td class="k">SALDO ATUAL:</td><td>${fmtBRL(d.saldo_atual)}</td></tr>
             </table>
@@ -2561,8 +2788,31 @@
       if (!nf) return;
       
       const emp = findById(DB.documentos, nf.empenho_id);
-      const c = findById(DB.contratos, nf.contrato_id);
-      const f = findById(DB.fornecedores, c?.fornecedor_id);
+      
+      // Buscar vínculo correto (Contrato ou Ata)
+      let vinculo = null;
+      let vinculoLabel = 'CONTRATO';
+      
+      if (emp) {
+        // Compatibilidade: converter contrato_id antigo
+        if (emp.contrato_id && !emp.tipo_vinculo) {
+          emp.tipo_vinculo = 'CONTRATO';
+          emp.vinculo_id = emp.contrato_id;
+        }
+        
+        if (emp.tipo_vinculo === 'ATA') {
+          vinculo = findById(DB.atas, emp.vinculo_id);
+          vinculoLabel = 'ATA';
+        } else {
+          vinculo = findById(DB.contratos, emp.vinculo_id || emp.contrato_id || nf.contrato_id);
+          vinculoLabel = 'CONTRATO';
+        }
+      } else {
+        // Fallback: buscar contrato direto da NF (compatibilidade)
+        vinculo = findById(DB.contratos, nf.contrato_id);
+      }
+      
+      const f = findById(DB.fornecedores, vinculo?.fornecedor_id);
       const itens = DB.itens.filter(it => it.nota_fiscal_id === nfId);
 
       const printRoot = qs("#printRoot");
@@ -2581,9 +2831,9 @@
           </div>
 
           <div class="box">
-            <div class="box-title">DADOS DO CONTRATO / FORNECEDOR</div>
+            <div class="box-title">DADOS DO ${vinculoLabel} / FORNECEDOR</div>
             <table class="kv">
-              <tr><td class="k">CONTRATO:</td><td>${escapeHtml(c?.numero || '')}</td></tr>
+              <tr><td class="k">${vinculoLabel}:</td><td>${escapeHtml(vinculo?.numero || '')}</td></tr>
               <tr><td class="k">FORNECEDOR:</td><td>${escapeHtml(f?.razao_social || '')}</td></tr>
               <tr><td class="k">EMPENHO:</td><td>${escapeHtml(emp?.numero || '')}</td></tr>
             </table>
