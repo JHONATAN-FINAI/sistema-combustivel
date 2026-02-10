@@ -2169,24 +2169,22 @@
                   <input type="text" class="form-control-modern" name="numero_nf" required>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Contrato *</label>
-                  <select class="form-control-modern" name="contrato_id" id="selContrato" required>
-                    <option value="">Selecione...</option>
-                    ${DB.contratos.map(c => `<option value="${c.id}">${escapeHtml(c.numero)}</option>`).join('')}
-                  </select>
-                </div>
-                <div class="form-group">
                   <label class="form-label">Combustível *</label>
                   <select class="form-control-modern" name="combustivel" id="selCombustivel" required>
                     <option value="">Selecione...</option>
                     ${Object.entries(COMB_LABEL).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}
                   </select>
                 </div>
-                <div class="form-group mb-0">
+                <div class="form-group">
                   <label class="form-label">Empenho *</label>
                   <select class="form-control-modern" name="empenho_id" id="selEmpenho" required disabled>
-                    <option value="">Primeiro selecione contrato e combustível</option>
+                    <option value="">Primeiro selecione o combustível</option>
                   </select>
+                </div>
+                <div class="form-group mb-0" id="infoVinculo" style="display:none;">
+                  <label class="form-label">Vinculado a:</label>
+                  <div class="form-control-modern" style="background: #f8fafc; color: #64748b;" id="textoVinculo"></div>
+                  <input type="hidden" name="contrato_id" id="hiddenContratoId">
                 </div>
               </form>
             </div>
@@ -2206,34 +2204,94 @@
       document.body.appendChild(modal);
       lucide.createIcons();
 
-      // Filtrar empenhos baseado em contrato e combustível
+      // Filtrar empenhos baseado em combustível
       const updateEmpenhos = () => {
-        const contratoId = qs("#selContrato", modal).value;
         const combustivel = qs("#selCombustivel", modal).value;
         const selEmp = qs("#selEmpenho", modal);
+        const infoVinculo = qs("#infoVinculo", modal);
 
-        if (!contratoId || !combustivel) {
+        if (!combustivel) {
           selEmp.disabled = true;
-          selEmp.innerHTML = '<option value="">Primeiro selecione contrato e combustível</option>';
+          selEmp.innerHTML = '<option value="">Primeiro selecione o combustível</option>';
+          infoVinculo.style.display = 'none';
           return;
         }
 
         const empenhos = DB.documentos.filter(d => 
           d.tipo_documento === DOC_TIPO.EMP && 
-          d.contrato_id === contratoId && 
           d.combustivel === combustivel
         );
 
         selEmp.disabled = false;
         selEmp.innerHTML = empenhos.length > 0
-          ? '<option value="">Selecione...</option>' + empenhos.map(e => 
-              `<option value="${e.id}">${escapeHtml(e.numero)} - Saldo: ${fmtBRL(e.saldo_atual)}</option>`
-            ).join('')
+          ? '<option value="">Selecione...</option>' + empenhos.map(e => {
+              // Compatibilidade: converter contrato_id antigo
+              if (e.contrato_id && !e.tipo_vinculo) {
+                e.tipo_vinculo = 'CONTRATO';
+                e.vinculo_id = e.contrato_id;
+              }
+              
+              let vinculoInfo = '';
+              if (e.tipo_vinculo === 'ATA') {
+                const ata = findById(DB.atas, e.vinculo_id);
+                vinculoInfo = ata ? ` - Ata ${escapeHtml(ata.numero)}` : '';
+              } else {
+                const contrato = findById(DB.contratos, e.vinculo_id || e.contrato_id);
+                vinculoInfo = contrato ? ` - Contrato ${escapeHtml(contrato.numero)}` : '';
+              }
+              
+              return `<option value="${e.id}">${escapeHtml(e.numero)}${vinculoInfo} - Saldo: ${fmtBRL(e.saldo_atual)}</option>`;
+            }).join('')
           : '<option value="">Nenhum empenho disponível</option>';
       };
 
-      qs("#selContrato", modal).onchange = updateEmpenhos;
+      // Atualizar info de vínculo ao selecionar empenho
+      const updateVinculoInfo = () => {
+        const empenhoId = qs("#selEmpenho", modal).value;
+        const infoVinculo = qs("#infoVinculo", modal);
+        const textoVinculo = qs("#textoVinculo", modal);
+        const hiddenContratoId = qs("#hiddenContratoId", modal);
+
+        if (!empenhoId) {
+          infoVinculo.style.display = 'none';
+          return;
+        }
+
+        const empenho = findById(DB.documentos, empenhoId);
+        if (!empenho) return;
+
+        // Compatibilidade
+        if (empenho.contrato_id && !empenho.tipo_vinculo) {
+          empenho.tipo_vinculo = 'CONTRATO';
+          empenho.vinculo_id = empenho.contrato_id;
+        }
+
+        let vinculoTexto = '';
+        let vinculoId = '';
+
+        if (empenho.tipo_vinculo === 'ATA') {
+          const ata = findById(DB.atas, empenho.vinculo_id);
+          if (ata) {
+            const fornecedor = findById(DB.fornecedores, ata.fornecedor_id);
+            vinculoTexto = `<strong>Ata:</strong> ${escapeHtml(ata.numero)}<br><strong>Fornecedor:</strong> ${escapeHtml(fornecedor?.razao_social || '-')}`;
+            vinculoId = ata.id;
+          }
+        } else {
+          const contrato = findById(DB.contratos, empenho.vinculo_id || empenho.contrato_id);
+          if (contrato) {
+            const fornecedor = findById(DB.fornecedores, contrato.fornecedor_id);
+            vinculoTexto = `<strong>Contrato:</strong> ${escapeHtml(contrato.numero)}<br><strong>Fornecedor:</strong> ${escapeHtml(fornecedor?.razao_social || '-')}`;
+            vinculoId = contrato.id;
+          }
+        }
+
+        textoVinculo.innerHTML = vinculoTexto;
+        hiddenContratoId.value = vinculoId;
+        infoVinculo.style.display = 'block';
+      };
+
       qs("#selCombustivel", modal).onchange = updateEmpenhos;
+      qs("#selEmpenho", modal).onchange = updateVinculoInfo;
 
       qs("#btnSaveNota", modal).onclick = () => {
         const form = qs("#formNota", modal);
