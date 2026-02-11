@@ -656,20 +656,20 @@
 
       /* Ajuste para tabela de abastecimentos não estourar */
       .rpt table.items {
-        font-size: 9px;
+        font-size: 7px;
         width: 100%;
         table-layout: fixed;
       }
 
       .rpt table.items th,
       .rpt table.items td {
-        padding: 4px 2px;
+        padding: 3px 1px;
         word-wrap: break-word;
         overflow-wrap: break-word;
       }
 
       .rpt table.items th {
-        font-size: 9px;
+        font-size: 7px;
       }
     }
 
@@ -865,6 +865,11 @@
       GASOLINA: "Gasolina Comum",
       DIESEL: "Óleo Diesel",
       ETANOL: "Etanol Hidratado"
+    };
+    const COMB_CODIGO = {
+      GASOLINA: "2330",
+      DIESEL: "2332",
+      ETANOL: "2331"
     };
 
     /*********************
@@ -3027,6 +3032,7 @@
       }
       
       const totalLitros = itens.reduce((sum, it) => sum + (it.qtd_litros || 0), 0);
+      const totalValor = itens.reduce((sum, it) => sum + ((it.qtd_litros || 0) * (it.valor_unitario || 0)), 0);
       const dataAtual = new Date().toLocaleDateString('pt-BR');
 
       const printRoot = qs("#printRoot");
@@ -3087,29 +3093,39 @@
           <table class="items">
             <thead>
               <tr>
-                <th style="width: 40px;">Cód.</th>
-                <th style="width: 70px;">Cód. Item</th>
-                <th style="width: 100px;">Produto</th>
-                <th style="width: 70px;" class="text-end">Qtde (L)</th>
-                <th style="width: 80px;">Data</th>
-                <th style="width: 80px;">N° Doc.</th>
-                <th style="width: 70px;">Placa</th>
-                <th>Veículo</th>
+                <th style="width: 50px;">Cód. Item</th>
+                <th style="width: 80px;">Produto</th>
+                <th style="width: 50px;" class="text-end">Qtde (L)</th>
+                <th style="width: 65px;">Data</th>
+                <th style="width: 60px;">N° Doc.</th>
+                <th style="width: 55px;">Placa</th>
+                <th style="width: 90px;">Veículo</th>
+                <th style="width: 55px;" class="text-end">Vlr Unit.</th>
+                <th style="width: 55px;" class="text-end">Vlr Abast.</th>
+                <th style="width: 40px;">Hora</th>
+                <th style="width: 45px;">Km</th>
+                <th>Motorista</th>
               </tr>
             </thead>
             <tbody>
               ${itens.map((it, idx) => {
                 const v = findById(DB.veiculos, it.veiculo_id);
+                const m = findById(DB.motoristas, it.motorista_id);
+                const valorAbast = (it.qtd_litros || 0) * (it.valor_unitario || 0);
                 return `
                   <tr>
-                    <td>${idx + 1}</td>
-                    <td>2332</td>
+                    <td>${COMB_CODIGO[nf.combustivel]}</td>
                     <td>${COMB_LABEL[nf.combustivel]}</td>
                     <td class="text-end">${fmtNum(it.qtd_litros)}</td>
                     <td>${isoToBR(it.data_abastecimento)}</td>
                     <td>${escapeHtml(it.numero_doc || '')}</td>
                     <td>${escapeHtml(v?.placa || '')}</td>
                     <td>${escapeHtml(v?.descricao || '')}</td>
+                    <td class="text-end">${fmtNum(it.valor_unitario, 3)}</td>
+                    <td class="text-end">${fmtNum(valorAbast)}</td>
+                    <td>${escapeHtml(it.hora || '')}</td>
+                    <td>${escapeHtml(it.km || '')}</td>
+                    <td>${escapeHtml(m?.nome || '')}</td>
                   </tr>
                 `;
               }).join('')}
@@ -3117,7 +3133,7 @@
           </table>
 
           <div style="margin: 20px 0; padding: 12px; background: #f9f9f9; border: 1px solid #ddd;">
-            <strong>TOTAL DO CÓDIGO DO ITEM: ${fmtNum(totalLitros)} Litros</strong>
+            <strong>TOTAL DO CÓDIGO DO ITEM: ${fmtNum(totalLitros)} Litros | Valor Total: R$ ${fmtNum(totalValor)}</strong>
           </div>
 
           <p style="margin: 40px 0 60px 0; text-align: justify;">
