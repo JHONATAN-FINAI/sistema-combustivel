@@ -884,18 +884,27 @@
     let supabaseClient = null;
     let useSupabase = false;
 
-    // Inicializar Supabase se credenciais foram fornecidas
-    if (SUPABASE_URL && SUPABASE_KEY) {
-      try {
-        const { createClient } = supabase;
-        supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
-        useSupabase = true;
-        console.log('✓ Supabase conectado');
-      } catch (error) {
-        console.error('Erro ao conectar Supabase:', error);
+    function initSupabase() {
+      // Inicializar Supabase se credenciais foram fornecidas
+      if (SUPABASE_URL && SUPABASE_KEY) {
+        try {
+          if (typeof supabase === 'undefined') {
+            console.error('❌ Biblioteca Supabase não carregada');
+            return false;
+          }
+          const { createClient } = supabase;
+          supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+          useSupabase = true;
+          console.log('✓ Supabase conectado');
+          return true;
+        } catch (error) {
+          console.error('Erro ao conectar Supabase:', error);
+          return false;
+        }
+      } else {
+        console.warn('⚠ Supabase não configurado. Usando apenas LocalStorage.');
+        return false;
       }
-    } else {
-      console.warn('⚠ Supabase não configurado. Usando apenas LocalStorage.');
     }
 
     /*********************
@@ -1071,8 +1080,19 @@
             supabaseClient.from('veiculos').select('*').order('placa'),
             supabaseClient.from('notas').select('*').order('created_at', { ascending: false }),
             supabaseClient.from('itens').select('*').order('created_at', { ascending: false }),
-            supabaseClient.from('fiscal').select('*').limit(1).single()
+            supabaseClient.from('fiscal').select('*').limit(1)
           ]);
+
+          // Verificar erros
+          if (forn.error) throw new Error(`Erro ao carregar fornecedores: ${forn.error.message}`);
+          if (contr.error) throw new Error(`Erro ao carregar contratos: ${contr.error.message}`);
+          if (at.error) throw new Error(`Erro ao carregar atas: ${at.error.message}`);
+          if (doc.error) throw new Error(`Erro ao carregar documentos: ${doc.error.message}`);
+          if (mot.error) throw new Error(`Erro ao carregar motoristas: ${mot.error.message}`);
+          if (veic.error) throw new Error(`Erro ao carregar veículos: ${veic.error.message}`);
+          if (not.error) throw new Error(`Erro ao carregar notas: ${not.error.message}`);
+          if (it.error) throw new Error(`Erro ao carregar itens: ${it.error.message}`);
+          if (fisc.error) throw new Error(`Erro ao carregar fiscal: ${fisc.error.message}`);
 
           DB.fornecedores = forn.data || [];
           DB.contratos = contr.data || [];
@@ -1082,17 +1102,32 @@
           DB.veiculos = veic.data || [];
           DB.notas = not.data || [];
           DB.itens = it.data || [];
-          if (fisc.data) DB.fiscal = fisc.data;
+          
+          // Fiscal pode estar vazio (array) ou ter um registro
+          if (fisc.data && fisc.data.length > 0) {
+            DB.fiscal = fisc.data[0];
+          }
 
           console.log('✓ Dados carregados do Supabase');
+          console.log(`  Fornecedores: ${DB.fornecedores.length}`);
+          console.log(`  Contratos: ${DB.contratos.length}`);
+          console.log(`  Atas: ${DB.atas.length}`);
+          console.log(`  Documentos: ${DB.documentos.length}`);
+          console.log(`  Motoristas: ${DB.motoristas.length}`);
+          console.log(`  Veículos: ${DB.veiculos.length}`);
+          console.log(`  Notas: ${DB.notas.length}`);
+          console.log(`  Itens: ${DB.itens.length}`);
           
           // Salvar no LocalStorage como backup
           localStorage.setItem("COMBUSTIVEL_DB", JSON.stringify(DB));
           return;
         } catch (error) {
-          console.error('Erro ao carregar do Supabase:', error);
-          console.warn('Usando LocalStorage como fallback...');
+          console.error('❌ Erro ao carregar do Supabase:', error);
+          console.warn('⚠ Usando LocalStorage como fallback...');
+          alert('Erro ao conectar com banco online. Usando dados locais.\n\nVerifique:\n1. Schema SQL foi executado?\n2. Conexão com internet OK?\n3. Credenciais corretas?');
         }
+      } else {
+        console.warn('⚠ Supabase desativado. Usando LocalStorage.');
       }
 
       // Fallback: LocalStorage
@@ -1108,6 +1143,8 @@
     async function renderRoute() {
       const hash = location.hash || "#/dashboard";
       const route = hash.substring(2);
+      
+      console.log(`📍 Renderizando rota: ${route}`);
 
       // Update active nav link
       qsa(".nav-link").forEach(link => {
@@ -1154,7 +1191,10 @@
       lucide.createIcons();
     }
 
-    window.addEventListener("hashchange", renderRoute);
+    window.addEventListener("hashchange", async () => {
+      console.log('Hash changed to:', location.hash);
+      await renderRoute();
+    });
 
     /*********************
      * DASHBOARD
@@ -1390,7 +1430,7 @@
       document.body.appendChild(modal);
       lucide.createIcons();
 
-      qs("#btnSaveFornecedor", modal).onclick = () => {
+      qs("#btnSaveFornecedor", modal).onclick = async () => {
         const form = qs("#formFornecedor", modal);
         if (!form.checkValidity()) {
           form.reportValidity();
@@ -1411,7 +1451,7 @@
 
         saveDB();
         modal.remove();
-        renderRoute();
+        await renderRoute();
         showToast(`Fornecedor ${isEdit ? 'atualizado' : 'criado'} com sucesso!`, 'success');
       };
     }
@@ -1422,7 +1462,7 @@
       DB.fornecedores = DB.fornecedores.filter(f => f.id !== id);
       await supabaseDelete('fornecedores', id);
       saveDB();
-      renderRoute();
+      await renderRoute();
       showToast('Fornecedor excluído com sucesso!', 'success');
     };
 
@@ -1538,7 +1578,7 @@
       document.body.appendChild(modal);
       lucide.createIcons();
 
-      qs("#btnSaveContrato", modal).onclick = () => {
+      qs("#btnSaveContrato", modal).onclick = async () => {
         const form = qs("#formContrato", modal);
         if (!form.checkValidity()) {
           form.reportValidity();
@@ -1559,7 +1599,7 @@
 
         saveDB();
         modal.remove();
-        renderRoute();
+        await renderRoute();
         showToast(`Contrato ${isEdit ? 'atualizado' : 'criado'} com sucesso!`, 'success');
       };
     }
@@ -1570,7 +1610,7 @@
       DB.contratos = DB.contratos.filter(c => c.id !== id);
       await supabaseDelete('contratos', id);
       saveDB();
-      renderRoute();
+      await renderRoute();
       showToast('Contrato excluído com sucesso!', 'success');
     };
 
@@ -1700,7 +1740,7 @@
       document.body.appendChild(modal);
       lucide.createIcons();
 
-      qs("#btnSaveAta", modal).onclick = () => {
+      qs("#btnSaveAta", modal).onclick = async () => {
         const form = qs("#formAta", modal);
         if (!form.checkValidity()) {
           form.reportValidity();
@@ -1723,7 +1763,7 @@
 
         saveDB();
         modal.remove();
-        renderRoute();
+        await renderRoute();
         showToast(`Ata ${isEdit ? 'atualizada' : 'cadastrada'} com sucesso!`, 'success');
       };
     }
@@ -1734,7 +1774,7 @@
       DB.atas = DB.atas.filter(a => a.id !== id);
       await supabaseDelete('atas', id);
       saveDB();
-      renderRoute();
+      await renderRoute();
       showToast('Ata excluída com sucesso!', 'success');
     };
 
@@ -1930,7 +1970,7 @@
       // Atualizar quando mudar tipo
       qs("#tipoVinculo", modal).onchange = atualizarVinculo;
 
-      qs("#btnSaveDoc", modal).onclick = () => {
+      qs("#btnSaveDoc", modal).onclick = async () => {
         const form = qs("#formDoc", modal);
         if (!form.checkValidity()) {
           form.reportValidity();
@@ -1952,7 +1992,7 @@
 
         saveDB();
         modal.remove();
-        renderRoute();
+        await renderRoute();
         showToast(`Documento ${isEdit ? 'atualizado' : 'criado'} com sucesso!`, 'success');
       };
     }
@@ -1963,7 +2003,7 @@
       DB.documentos = DB.documentos.filter(d => d.id !== id);
       await supabaseDelete('documentos', id);
       saveDB();
-      renderRoute();
+      await renderRoute();
       showToast('Documento excluído com sucesso!', 'success');
     };
 
@@ -2069,7 +2109,7 @@
       document.body.appendChild(modal);
       lucide.createIcons();
 
-      qs("#btnSaveMotorista", modal).onclick = () => {
+      qs("#btnSaveMotorista", modal).onclick = async () => {
         const form = qs("#formMotorista", modal);
         if (!form.checkValidity()) {
           form.reportValidity();
@@ -2090,7 +2130,7 @@
 
         saveDB();
         modal.remove();
-        renderRoute();
+        await renderRoute();
         showToast(`Motorista ${isEdit ? 'atualizado' : 'criado'} com sucesso!`, 'success');
       };
     }
@@ -2101,7 +2141,7 @@
       DB.motoristas = DB.motoristas.filter(m => m.id !== id);
       await supabaseDelete('motoristas', id);
       saveDB();
-      renderRoute();
+      await renderRoute();
       showToast('Motorista excluído com sucesso!', 'success');
     };
 
@@ -2204,7 +2244,7 @@
       document.body.appendChild(modal);
       lucide.createIcons();
 
-      qs("#btnSaveVeiculo", modal).onclick = () => {
+      qs("#btnSaveVeiculo", modal).onclick = async () => {
         const form = qs("#formVeiculo", modal);
         if (!form.checkValidity()) {
           form.reportValidity();
@@ -2225,7 +2265,7 @@
 
         saveDB();
         modal.remove();
-        renderRoute();
+        await renderRoute();
         showToast(`Veículo ${isEdit ? 'atualizado' : 'criado'} com sucesso!`, 'success');
       };
     }
@@ -2236,7 +2276,7 @@
       DB.veiculos = DB.veiculos.filter(v => v.id !== id);
       await supabaseDelete('veiculos', id);
       saveDB();
-      renderRoute();
+      await renderRoute();
       showToast('Veículo excluído com sucesso!', 'success');
     };
 
@@ -2767,7 +2807,7 @@
         // Finalizar NF
         const btnFinalizar = qs("#btnFinalizarNF", modal);
         if (btnFinalizar) {
-          btnFinalizar.onclick = () => {
+          btnFinalizar.onclick = async () => {
             if (itensNota.length === 0) {
               showToast('Adicione ao menos 1 abastecimento antes de finalizar!', 'danger');
               return;
@@ -2786,7 +2826,7 @@
 
             saveDB();
             modal.remove();
-            renderRoute();
+            await renderRoute();
             showToast('Nota fiscal finalizada com sucesso!', 'success');
           };
         }
@@ -2817,7 +2857,7 @@
       await supabaseDelete('notas', id);
       
       saveDB();
-      renderRoute();
+      await renderRoute();
       showToast('Nota fiscal excluída!', 'success');
     };
 
@@ -3503,31 +3543,72 @@
      * INITIALIZATION
      *********************/
     (async function init() {
-      await loadDB();
+      console.log('🚀 Iniciando sistema...');
+      
+      try {
+        // Inicializar Supabase
+        console.log('1️⃣ Inicializando Supabase...');
+        initSupabase();
+        
+        // Carregar dados
+        console.log('2️⃣ Carregando dados...');
+        await loadDB();
+        console.log('✅ Dados carregados com sucesso');
+      } catch (error) {
+        console.error('❌ Erro na inicialização:', error);
+        // Garantir que DB tenha estrutura mínima
+        if (!DB.fornecedores) DB.fornecedores = [];
+        if (!DB.contratos) DB.contratos = [];
+        if (!DB.atas) DB.atas = [];
+        if (!DB.documentos) DB.documentos = [];
+        if (!DB.motoristas) DB.motoristas = [];
+        if (!DB.veiculos) DB.veiculos = [];
+        if (!DB.notas) DB.notas = [];
+        if (!DB.itens) DB.itens = [];
+        if (!DB.fiscal) DB.fiscal = {
+          nome: 'JHONATAN FERNANDES GOMES',
+          cargo: 'SUPERINTENDENTE DE CONTROLE DE FROTA E COMBUSTÍVEL',
+          lotacao: 'SECRETARIA DE ADMINISTRAÇÃO',
+          telefone: '(66) 99625-3604',
+          portaria: '20/2025',
+          portaria_diorondon: '5895 de 24/02/2025'
+        };
+      }
+      
+      console.log('3️⃣ Configurando interface...');
       
       // Mobile menu toggle
       const btnMenu = qs("#btnMobileMenu");
       const sidebar = qs("#sidebar");
       
-      function checkMobile() {
-        if (window.innerWidth <= 768) {
-          btnMenu.style.display = "flex";
-        } else {
-          btnMenu.style.display = "none";
-          sidebar.classList.remove("mobile-open");
+      if (btnMenu && sidebar) {
+        function checkMobile() {
+          if (window.innerWidth <= 768) {
+            btnMenu.style.display = "flex";
+          } else {
+            btnMenu.style.display = "none";
+            sidebar.classList.remove("mobile-open");
+          }
         }
+
+        btnMenu.onclick = () => {
+          sidebar.classList.toggle("mobile-open");
+        };
+
+        window.addEventListener("resize", checkMobile);
+        checkMobile();
       }
 
-      btnMenu.onclick = () => {
-        sidebar.classList.toggle("mobile-open");
-      };
-
-      window.addEventListener("resize", checkMobile);
-      checkMobile();
-
       // Default route
+      console.log('4️⃣ Renderizando rota inicial...');
       if (!location.hash) location.hash = "#/dashboard";
-      await renderRoute();
+      
+      try {
+        await renderRoute();
+        console.log('✅ Sistema iniciado com sucesso!');
+      } catch (error) {
+        console.error('❌ Erro ao renderizar rota:', error);
+      }
     })();
   </script>
 </body>
