@@ -2798,7 +2798,11 @@
       qs("#btnRelAdm").onclick = () => printRelAdm(qs("#rel_adm_contrato").value);
       qs("#btnRelEmp").onclick = () => printRelEmp(qs("#rel_emp_doc").value);
       qs("#btnRelNF").onclick = () => printRelatorioByNF(qs("#rel_nf_doc").value);
-      qs("#btnRelPag").onclick = () => printRelPagamento(qs("#rel_pag_doc").value);
+      qs("#btnRelPag").onclick = () => {
+        const nfId = qs("#rel_pag_doc").value;
+        console.log('Botão Relatório Pagamento clicado, nfId:', nfId);
+        printRelPagamento(nfId);
+      };
       
       lucide.createIcons();
     }
@@ -2946,10 +2950,16 @@
     }
 
     function printRelPagamento(nfId) {
+      console.log('printRelPagamento chamada com nfId:', nfId);
       const nf = findById(DB.notas, nfId);
-      if (!nf) return;
+      console.log('Nota encontrada:', nf);
+      if (!nf) {
+        console.error('Nota não encontrada!');
+        return;
+      }
       
       const emp = findById(DB.documentos, nf.empenho_id);
+      console.log('Empenho encontrado:', emp);
       
       // Buscar vínculo correto (Contrato ou Ata)
       let vinculo = null;
@@ -2975,13 +2985,20 @@
         vinculo = findById(DB.contratos, nf.contrato_id);
       }
       
+      console.log('Vínculo encontrado:', vinculo);
+      
       const f = findById(DB.fornecedores, vinculo?.fornecedor_id);
       const itens = DB.itens.filter(it => it.nota_fiscal_id === nfId);
+      
+      console.log('Fornecedor:', f);
+      console.log('Itens:', itens);
       
       const totalLitros = itens.reduce((sum, it) => sum + (it.qtd_litros || 0), 0);
       const dataAtual = new Date().toLocaleDateString('pt-BR');
 
       const printRoot = qs("#printRoot");
+      console.log('printRoot element:', printRoot);
+      
       printRoot.innerHTML = `
         <div class="rpt">
           <div class="logo-box"><img src="https://advantagemidia.com/wp-content/uploads/2026/01/WhatsApp-Image-2026-01-15-at-10.31.14.jpeg" alt="Logo"></div>
@@ -3087,7 +3104,11 @@
           </div>
         </div>
       `;
-      setTimeout(() => window.print(), 100);
+      console.log('HTML definido no printRoot, chamando print em 100ms...');
+      setTimeout(() => {
+        console.log('Chamando window.print()');
+        window.print();
+      }, 100);
     }
 
     window.printRelatorioByNF = (nfId) => {
