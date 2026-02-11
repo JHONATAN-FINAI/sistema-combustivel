@@ -1187,8 +1187,17 @@
       const handler = routeHandlers[route] || renderDashboard;
       await handler();
 
-      // Refresh Lucide icons
-      lucide.createIcons();
+      // Refresh Lucide icons (com verificação)
+      if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        lucide.createIcons();
+      } else {
+        console.warn('Lucide não carregado ainda');
+        setTimeout(() => {
+          if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            lucide.createIcons();
+          }
+        }, 100);
+      }
     }
 
     window.addEventListener("hashchange", async () => {
@@ -2777,7 +2786,7 @@
 
       if (!nota.finalizada_em) {
         // Form submit handler
-        qs("#formAbastecimento", modal).onsubmit = (e) => {
+        qs("#formAbastecimento", modal).onsubmit = async (e) => {
           e.preventDefault();
           const form = e.target;
           const data = new FormData(form);
@@ -3544,6 +3553,19 @@
      *********************/
     (async function init() {
       console.log('🚀 Iniciando sistema...');
+      
+      // Aguardar Lucide carregar
+      let lucideAttempts = 0;
+      while (typeof lucide === 'undefined' && lucideAttempts < 20) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        lucideAttempts++;
+      }
+      
+      if (typeof lucide === 'undefined') {
+        console.warn('⚠ Lucide não carregou. Ícones podem não aparecer.');
+      } else {
+        console.log('✓ Lucide carregado');
+      }
       
       try {
         // Inicializar Supabase
