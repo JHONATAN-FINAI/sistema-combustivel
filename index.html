@@ -653,6 +653,24 @@
         size: A4;
         margin: 12mm;
       }
+
+      /* Ajuste para tabela de abastecimentos não estourar */
+      .rpt table.items {
+        font-size: 9px;
+        width: 100%;
+        table-layout: fixed;
+      }
+
+      .rpt table.items th,
+      .rpt table.items td {
+        padding: 4px 2px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+
+      .rpt table.items th {
+        font-size: 9px;
+      }
     }
 
     #printRoot {
@@ -744,7 +762,7 @@
   <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <div class="app-container">
+  <div class="app-container no-print">
     <!-- Sidebar -->
     <aside class="sidebar no-print" id="sidebar">
       <div class="sidebar-header">
@@ -1512,6 +1530,20 @@
                   <input type="text" class="form-control-modern" name="numero" value="${escapeHtml(ata.numero || '')}" required>
                 </div>
                 <div class="form-group">
+                  <label class="form-label">Pregão</label>
+                  <input type="text" class="form-control-modern" name="pregao" value="${escapeHtml(ata.pregao || '')}" placeholder="Ex: 001/2025">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div class="form-group">
+                    <label class="form-label">Vigência Início</label>
+                    <input type="date" class="form-control-modern" name="vigencia_inicio" value="${ata.vigencia_inicio || ''}">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Vigência Fim</label>
+                    <input type="date" class="form-control-modern" name="vigencia_fim" value="${ata.vigencia_fim || ''}">
+                  </div>
+                </div>
+                <div class="form-group">
                   <label class="form-label">Fornecedor *</label>
                   <select class="form-control-modern" name="fornecedor_id" required>
                     <option value="">Selecione...</option>
@@ -1681,6 +1713,16 @@
                 <div class="form-group">
                   <label class="form-label">Número *</label>
                   <input type="text" class="form-control-modern" name="numero" value="${escapeHtml(doc.numero || '')}" required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div class="form-group">
+                    <label class="form-label">Pré-Empenho</label>
+                    <input type="text" class="form-control-modern" name="pre_empenho" value="${escapeHtml(doc.pre_empenho || '')}" placeholder="Opcional">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Ordem de Fornecimento</label>
+                    <input type="text" class="form-control-modern" name="ordem_fornecimento" value="${escapeHtml(doc.ordem_fornecimento || '')}" placeholder="Opcional">
+                  </div>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Vincular a *</label>
@@ -2798,11 +2840,7 @@
       qs("#btnRelAdm").onclick = () => printRelAdm(qs("#rel_adm_contrato").value);
       qs("#btnRelEmp").onclick = () => printRelEmp(qs("#rel_emp_doc").value);
       qs("#btnRelNF").onclick = () => printRelatorioByNF(qs("#rel_nf_doc").value);
-      qs("#btnRelPag").onclick = () => {
-        const nfId = qs("#rel_pag_doc").value;
-        console.log('Botão Relatório Pagamento clicado, nfId:', nfId);
-        printRelPagamento(nfId);
-      };
+      qs("#btnRelPag").onclick = () => printRelPagamento(qs("#rel_pag_doc").value);
       
       lucide.createIcons();
     }
@@ -2950,16 +2988,10 @@
     }
 
     function printRelPagamento(nfId) {
-      console.log('printRelPagamento chamada com nfId:', nfId);
       const nf = findById(DB.notas, nfId);
-      console.log('Nota encontrada:', nf);
-      if (!nf) {
-        console.error('Nota não encontrada!');
-        return;
-      }
+      if (!nf) return;
       
       const emp = findById(DB.documentos, nf.empenho_id);
-      console.log('Empenho encontrado:', emp);
       
       // Buscar vínculo correto (Contrato ou Ata)
       let vinculo = null;
@@ -2985,20 +3017,19 @@
         vinculo = findById(DB.contratos, nf.contrato_id);
       }
       
-      console.log('Vínculo encontrado:', vinculo);
-      
       const f = findById(DB.fornecedores, vinculo?.fornecedor_id);
       const itens = DB.itens.filter(it => it.nota_fiscal_id === nfId);
       
-      console.log('Fornecedor:', f);
-      console.log('Itens:', itens);
+      // Calcular vigência formatada
+      let vigenciaFormatada = '-';
+      if (vinculo && vinculo.vigencia_inicio && vinculo.vigencia_fim) {
+        vigenciaFormatada = isoToBR(vinculo.vigencia_inicio) + ' a ' + isoToBR(vinculo.vigencia_fim);
+      }
       
       const totalLitros = itens.reduce((sum, it) => sum + (it.qtd_litros || 0), 0);
       const dataAtual = new Date().toLocaleDateString('pt-BR');
 
       const printRoot = qs("#printRoot");
-      console.log('printRoot element:', printRoot);
-      
       printRoot.innerHTML = `
         <div class="rpt">
           <div class="logo-box"><img src="https://advantagemidia.com/wp-content/uploads/2026/01/WhatsApp-Image-2026-01-15-at-10.31.14.jpeg" alt="Logo"></div>
@@ -3009,8 +3040,8 @@
             <table class="kv">
               <tr><td class="k">EMPRESA:</td><td>${escapeHtml(f?.razao_social || '')}</td></tr>
               <tr><td class="k">CNPJ:</td><td>${escapeHtml(f?.cnpj || '')}</td></tr>
-              <tr><td class="k">VIGÊNCIA DO ${vinculoLabel}:</td><td>${vinculo?.vigencia || '-'}</td></tr>
-              <tr><td class="k">PREGÃO:</td><td>${vinculo?.pregao || '-'}</td></tr>
+              <tr><td class="k">VIGÊNCIA DO ${vinculoLabel}:</td><td>${vigenciaFormatada}</td></tr>
+              <tr><td class="k">PREGÃO:</td><td>${escapeHtml(vinculo?.pregao || '-')}</td></tr>
               <tr><td class="k">${vinculoTituloLabel}:</td><td>${escapeHtml(vinculo?.numero || '')}</td></tr>
               <tr><td class="k">MODALIDADE:</td><td>${vinculo?.modalidade || 'PREGÃO ELETRÔNICO'}</td></tr>
               <tr><td class="k">OBJETO LICITADO:</td><td>${escapeHtml(vinculo?.objeto || '')}</td></tr>
@@ -3021,8 +3052,8 @@
             <div class="box-title">DADOS DA NOTA FISCAL E EMPENHO</div>
             <table class="kv">
               <tr><td class="k">NOTA FISCAL Nº:</td><td>${escapeHtml(nf.numero_nf)}</td><td class="k" style="padding-left: 40px;">DATA DA EMISSÃO:</td><td>${dataAtual}</td></tr>
-              <tr><td class="k">EMPENHO Nº:</td><td>${escapeHtml(emp?.numero || '')}</td><td class="k" style="padding-left: 40px;">PRÉ-EMPENHO:</td><td>-</td></tr>
-              <tr><td class="k">ORDEM DE FORNECIMENTO:</td><td colspan="3">-</td></tr>
+              <tr><td class="k">EMPENHO Nº:</td><td>${escapeHtml(emp?.numero || '')}</td><td class="k" style="padding-left: 40px;">PRÉ-EMPENHO:</td><td>${escapeHtml(emp?.pre_empenho || '-')}</td></tr>
+              <tr><td class="k">ORDEM DE FORNECIMENTO:</td><td colspan="3">${escapeHtml(emp?.ordem_fornecimento || '-')}</td></tr>
             </table>
           </div>
 
@@ -3056,13 +3087,13 @@
           <table class="items">
             <thead>
               <tr>
-                <th style="width: 60px;">Cód.</th>
-                <th style="width: 100px;">Código Item</th>
-                <th>Produto</th>
-                <th style="width: 100px;" class="text-end">Qtde (Litros)</th>
-                <th style="width: 110px;">Data Abast</th>
-                <th style="width: 100px;">N° Doc.</th>
-                <th style="width: 100px;">Placa</th>
+                <th style="width: 40px;">Cód.</th>
+                <th style="width: 70px;">Cód. Item</th>
+                <th style="width: 100px;">Produto</th>
+                <th style="width: 70px;" class="text-end">Qtde (L)</th>
+                <th style="width: 80px;">Data</th>
+                <th style="width: 80px;">N° Doc.</th>
+                <th style="width: 70px;">Placa</th>
                 <th>Veículo</th>
               </tr>
             </thead>
@@ -3102,13 +3133,15 @@
             <strong>${escapeHtml(DB.fiscal.nome)}</strong><br>
             <span>FISCAL DE CONTRATO</span>
           </div>
+
+          <div style="margin-top: 80px; text-align: center;">
+            <div style="border-top: 1px solid #000; width: 300px; margin: 0 auto 8px auto;"></div>
+            <strong>LUCIANO RODRIGUES</strong><br>
+            <span>SECRETÁRIO MUNICIPAL DE ADMINISTRAÇÃO, GESTÃO DE PESSOAS E INOVAÇÃO</span>
+          </div>
         </div>
       `;
-      console.log('HTML definido no printRoot, chamando print em 100ms...');
-      setTimeout(() => {
-        console.log('Chamando window.print()');
-        window.print();
-      }, 100);
+      setTimeout(() => window.print(), 100);
     }
 
     window.printRelatorioByNF = (nfId) => {
