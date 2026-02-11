@@ -801,6 +801,10 @@
             <i data-lucide="car"></i>
             Veículos
           </a>
+          <a href="#/fiscal" class="nav-link">
+            <i data-lucide="user-check"></i>
+            Fiscal
+          </a>
         </div>
 
         <div class="nav-section">
@@ -942,7 +946,15 @@
       motoristas: [],
       veiculos: [],
       notas: [],
-      itens: []
+      itens: [],
+      fiscal: {
+        nome: 'JHONATAN FERNANDES GOMES',
+        cargo: 'SUPERINTENDENTE DE CONTROLE DE FROTA E COMBUSTÍVEL',
+        lotacao: 'SECRETARIA DE ADMINISTRAÇÃO',
+        telefone: '(66) 99625-3604',
+        portaria: '20/2025',
+        portaria_diorondon: '5895 de 24/02/2025'
+      }
     };
 
     function saveDB() {
@@ -980,6 +992,7 @@
         documentos: "Empenhos & AFTs",
         motoristas: "Motoristas",
         veiculos: "Veículos",
+        fiscal: "Fiscal de Contrato",
         importexport: "Backup & Restaurar"
       };
       qs("#pageTitle").textContent = titleMap[route] || "Sistema";
@@ -993,6 +1006,7 @@
         documentos: renderDocumentos,
         motoristas: renderMotoristas,
         veiculos: renderVeiculos,
+        fiscal: renderFiscal,
         notas: renderNotas,
         historico: renderHistorico,
         relatorios: renderRelatorios,
@@ -2045,6 +2059,72 @@
     };
 
     /*********************
+     * FISCAL
+     *********************/
+    async function renderFiscal() {
+      const view = qs("#view");
+      const f = DB.fiscal;
+
+      view.innerHTML = `
+        <div class="toolbar">
+          <h5 class="mb-0">Dados do Fiscal de Contrato</h5>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-12">
+            <div class="card-modern">
+              <form id="formFiscal">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Nome Completo *</label>
+                    <input type="text" class="form-control-modern" name="nome" value="${escapeHtml(f.nome)}" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Cargo *</label>
+                    <input type="text" class="form-control-modern" name="cargo" value="${escapeHtml(f.cargo)}" required>
+                  </div>
+                  <div class="col-md-8">
+                    <label class="form-label">Lotação *</label>
+                    <input type="text" class="form-control-modern" name="lotacao" value="${escapeHtml(f.lotacao)}" required>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Telefone *</label>
+                    <input type="text" class="form-control-modern" name="telefone" value="${escapeHtml(f.telefone)}" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Portaria *</label>
+                    <input type="text" class="form-control-modern" name="portaria" value="${escapeHtml(f.portaria)}" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Publicação Diorondon *</label>
+                    <input type="text" class="form-control-modern" name="portaria_diorondon" value="${escapeHtml(f.portaria_diorondon)}" required placeholder="Ex: 5895 de 24/02/2025">
+                  </div>
+                </div>
+
+                <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color);">
+                  <button type="submit" class="btn-modern btn-primary">
+                    <i data-lucide="save"></i>
+                    Salvar Dados
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+
+      lucide.createIcons();
+
+      qs("#formFiscal").onsubmit = (e) => {
+        e.preventDefault();
+        const data = new FormData(e.target);
+        Object.assign(DB.fiscal, Object.fromEntries(data.entries()));
+        saveDB();
+        showToast('Dados do fiscal salvos com sucesso!', 'success');
+      };
+    }
+
+    /*********************
      * NOTAS FISCAIS (Functionality mantida, UI modernizada)
      *********************/
     async function renderNotas() {
@@ -2691,12 +2771,36 @@
               </button>
             </div>
           </div>
+
+          <div class="col-md-4">
+            <div class="card-modern">
+              <div style="margin-bottom: 16px;">
+                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                  <i data-lucide="receipt" style="width: 24px; height: 24px; color: white;"></i>
+                </div>
+                <h5>Relatório de Pagamento</h5>
+                <p class="text-secondary small">Relatório administrativo para pagamento</p>
+              </div>
+              <select class="form-control-modern mb-3" id="rel_pag_doc">
+                ${DB.notas.filter(n => n.finalizada_em).map(n => 
+                  `<option value="${n.id}">NF ${escapeHtml(n.numero_nf)} - ${COMB_LABEL[n.combustivel]}</option>`
+                ).join('')}
+              </select>
+              <button class="btn-modern btn-primary w-100" style="background: #8b5cf6;" id="btnRelPag">
+                <i data-lucide="printer"></i>
+                Gerar Relatório
+              </button>
+            </div>
+          </div>
         </div>
       `;
 
       qs("#btnRelAdm").onclick = () => printRelAdm(qs("#rel_adm_contrato").value);
       qs("#btnRelEmp").onclick = () => printRelEmp(qs("#rel_emp_doc").value);
       qs("#btnRelNF").onclick = () => printRelatorioByNF(qs("#rel_nf_doc").value);
+      qs("#btnRelPag").onclick = () => printRelPagamento(qs("#rel_pag_doc").value);
+      
+      lucide.createIcons();
     }
 
     // Funções de impressão (mantidas do original)
@@ -2836,6 +2940,151 @@
               }).join("")}
             </tbody>
           </table>
+        </div>
+      `;
+      window.print();
+    }
+
+    function printRelPagamento(nfId) {
+      const nf = findById(DB.notas, nfId);
+      if (!nf) return;
+      
+      const emp = findById(DB.documentos, nf.empenho_id);
+      
+      // Buscar vínculo correto (Contrato ou Ata)
+      let vinculo = null;
+      let vinculoLabel = 'CONTRATO';
+      let vinculoTituloLabel = 'ATA DE REGISTRO DE PREÇO';
+      
+      if (emp) {
+        if (emp.contrato_id && !emp.tipo_vinculo) {
+          emp.tipo_vinculo = 'CONTRATO';
+          emp.vinculo_id = emp.contrato_id;
+        }
+        
+        if (emp.tipo_vinculo === 'ATA') {
+          vinculo = findById(DB.atas, emp.vinculo_id);
+          vinculoLabel = 'ATA';
+          vinculoTituloLabel = 'ATA DE REGISTRO DE PREÇO';
+        } else {
+          vinculo = findById(DB.contratos, emp.vinculo_id || emp.contrato_id || nf.contrato_id);
+          vinculoLabel = 'CONTRATO';
+          vinculoTituloLabel = 'CONTRATO Nº';
+        }
+      } else {
+        vinculo = findById(DB.contratos, nf.contrato_id);
+      }
+      
+      const f = findById(DB.fornecedores, vinculo?.fornecedor_id);
+      const itens = DB.itens.filter(it => it.nota_fiscal_id === nfId);
+      
+      const totalLitros = itens.reduce((sum, it) => sum + (it.qtd_litros || 0), 0);
+      const dataAtual = new Date().toLocaleDateString('pt-BR');
+
+      const printRoot = qs("#printRoot");
+      printRoot.innerHTML = `
+        <div class="rpt">
+          <div class="logo-box"><img src="https://advantagemidia.com/wp-content/uploads/2026/01/WhatsApp-Image-2026-01-15-at-10.31.14.jpeg" alt="Logo"></div>
+          <div class="title">RELATÓRIO ADMINISTRATIVO - PAGAMENTO</div>
+          
+          <div class="box">
+            <div class="box-title">DADOS DO ${vinculoLabel.toUpperCase()} E CONTRATADO</div>
+            <table class="kv">
+              <tr><td class="k">EMPRESA:</td><td>${escapeHtml(f?.razao_social || '')}</td></tr>
+              <tr><td class="k">CNPJ:</td><td>${escapeHtml(f?.cnpj || '')}</td></tr>
+              <tr><td class="k">VIGÊNCIA DO ${vinculoLabel}:</td><td>${vinculo?.vigencia || '-'}</td></tr>
+              <tr><td class="k">PREGÃO:</td><td>${vinculo?.pregao || '-'}</td></tr>
+              <tr><td class="k">${vinculoTituloLabel}:</td><td>${escapeHtml(vinculo?.numero || '')}</td></tr>
+              <tr><td class="k">MODALIDADE:</td><td>${vinculo?.modalidade || 'PREGÃO ELETRÔNICO'}</td></tr>
+              <tr><td class="k">OBJETO LICITADO:</td><td>${escapeHtml(vinculo?.objeto || '')}</td></tr>
+            </table>
+          </div>
+
+          <div class="box">
+            <div class="box-title">DADOS DA NOTA FISCAL E EMPENHO</div>
+            <table class="kv">
+              <tr><td class="k">NOTA FISCAL Nº:</td><td>${escapeHtml(nf.numero_nf)}</td><td class="k" style="padding-left: 40px;">DATA DA EMISSÃO:</td><td>${dataAtual}</td></tr>
+              <tr><td class="k">EMPENHO Nº:</td><td>${escapeHtml(emp?.numero || '')}</td><td class="k" style="padding-left: 40px;">PRÉ-EMPENHO:</td><td>-</td></tr>
+              <tr><td class="k">ORDEM DE FORNECIMENTO:</td><td colspan="3">-</td></tr>
+            </table>
+          </div>
+
+          <div class="box">
+            <div class="box-title">DADOS DO FISCAL DESIGNADO</div>
+            <table class="kv">
+              <tr><td class="k">NOME:</td><td colspan="3">${escapeHtml(DB.fiscal.nome)}</td></tr>
+              <tr><td class="k">CARGO:</td><td colspan="3">${escapeHtml(DB.fiscal.cargo)}</td></tr>
+              <tr><td class="k">LOTAÇÃO:</td><td>${escapeHtml(DB.fiscal.lotacao)}</td><td class="k" style="padding-left: 40px;">TELEFONE:</td><td>${escapeHtml(DB.fiscal.telefone)}</td></tr>
+              <tr><td class="k">PORTARIA:</td><td>${escapeHtml(DB.fiscal.portaria)}</td><td class="k" style="padding-left: 40px;">PUBLICADA NO DIORONDON Nº:</td><td>${escapeHtml(DB.fiscal.portaria_diorondon)}</td></tr>
+            </table>
+          </div>
+
+          <div class="box">
+            <table class="kv">
+              <tr><td class="k">PERÍODO FISCALIZADO:</td><td>${itens.length > 0 ? isoToBR(itens[0].data_abastecimento) + ' a ' + isoToBR(itens[itens.length - 1].data_abastecimento) : '-'}</td></tr>
+              <tr><td class="k">RELATÓRIO:</td><td>( X ) MENSAL &nbsp;&nbsp;&nbsp;&nbsp; ( &nbsp; ) QUADRIMESTRAL</td></tr>
+            </table>
+          </div>
+
+          <div style="margin: 24px 0; padding: 16px; border: 1px solid #ddd; background: #f9f9f9;">
+            <h6 style="margin-bottom: 12px;"><strong>1. ANÁLISE DO ${vinculoLabel}</strong></h6>
+            <p style="text-align: justify; line-height: 1.6;">
+              O presente ${vinculoLabel.toLowerCase()} com a empresa ${escapeHtml(f?.razao_social || '')} tem como objeto o fornecimento de combustível (${COMB_LABEL[nf.combustivel]}). 
+              Durante o período fiscalizado foram realizados ${itens.length} abastecimentos, totalizando ${fmtNum(totalLitros)} litros. 
+              Os serviços foram executados conforme as especificações contratuais, não havendo pendências ou irregularidades a serem relatadas.
+            </p>
+          </div>
+
+          <div class="section-title">2. RELATÓRIO DA PRESTAÇÃO DE SERVIÇO / DOS ITENS ADQUIRIDOS</div>
+          <table class="items">
+            <thead>
+              <tr>
+                <th style="width: 60px;">Cód.</th>
+                <th style="width: 100px;">Código Item</th>
+                <th>Produto</th>
+                <th style="width: 100px;" class="text-end">Qtde (Litros)</th>
+                <th style="width: 110px;">Data Abast</th>
+                <th style="width: 100px;">N° Doc.</th>
+                <th style="width: 100px;">Placa</th>
+                <th>Veículo</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itens.map((it, idx) => {
+                const v = findById(DB.veiculos, it.veiculo_id);
+                return `
+                  <tr>
+                    <td>${idx + 1}</td>
+                    <td>2332</td>
+                    <td>${COMB_LABEL[nf.combustivel]}</td>
+                    <td class="text-end">${fmtNum(it.qtd_litros)}</td>
+                    <td>${isoToBR(it.data_abastecimento)}</td>
+                    <td>${escapeHtml(it.numero_doc || '')}</td>
+                    <td>${escapeHtml(v?.placa || '')}</td>
+                    <td>${escapeHtml(v?.descricao || '')}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+
+          <div style="margin: 20px 0; padding: 12px; background: #f9f9f9; border: 1px solid #ddd;">
+            <strong>TOTAL DO CÓDIGO DO ITEM: ${fmtNum(totalLitros)} Litros</strong>
+          </div>
+
+          <p style="margin: 40px 0 60px 0; text-align: justify;">
+            Submetemos os autos (a)o para avaliação do Gestor do contrato, Secretário Municipal de Administração.
+          </p>
+
+          <div style="text-align: right; margin-bottom: 12px;">
+            Rondonópolis/MT, ${dataAtual}
+          </div>
+
+          <div style="margin-top: 80px; text-align: center;">
+            <div style="border-top: 1px solid #000; width: 300px; margin: 0 auto 8px auto;"></div>
+            <strong>${escapeHtml(DB.fiscal.nome)}</strong><br>
+            <span>FISCAL DE CONTRATO</span>
+          </div>
         </div>
       `;
       window.print();
