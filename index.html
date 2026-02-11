@@ -756,6 +756,9 @@
       font-size: 13px;
     }
   </style>
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
@@ -873,6 +876,29 @@
     };
 
     /*********************
+     * SUPABASE CONFIG
+     *********************/
+    const SUPABASE_URL = 'https://skkrnrdyketlelnjvhts.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNra3JucmR5a2V0bGVsbmp2aHRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4Mzc3MTksImV4cCI6MjA4NjQxMzcxOX0.hmolSB4F6MZCD-TgdXXwsnB3HAkD8y1S27qsT0UjYeA';
+    
+    let supabaseClient = null;
+    let useSupabase = false;
+
+    // Inicializar Supabase se credenciais foram fornecidas
+    if (SUPABASE_URL && SUPABASE_KEY) {
+      try {
+        const { createClient } = supabase;
+        supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+        useSupabase = true;
+        console.log('✓ Supabase conectado');
+      } catch (error) {
+        console.error('Erro ao conectar Supabase:', error);
+      }
+    } else {
+      console.warn('⚠ Supabase não configurado. Usando apenas LocalStorage.');
+    }
+
+    /*********************
      * UTILITY FUNCTIONS
      *********************/
     const qs = (selector, parent = document) => parent.querySelector(selector);
@@ -984,7 +1010,92 @@
       localStorage.setItem("COMBUSTIVEL_DB", JSON.stringify(DB));
     }
 
+    /*********************
+     * SUPABASE SYNC
+     *********************/
+    async function supabaseInsert(table, data) {
+      if (!useSupabase) return;
+      try {
+        const { error } = await supabaseClient.from(table).insert(data);
+        if (error) throw error;
+      } catch (error) {
+        console.error(`Erro ao inserir em ${table}:`, error);
+      }
+    }
+
+    async function supabaseUpdate(table, id, data) {
+      if (!useSupabase) return;
+      try {
+        const { error } = await supabaseClient.from(table).update(data).eq('id', id);
+        if (error) throw error;
+      } catch (error) {
+        console.error(`Erro ao atualizar ${table}:`, error);
+      }
+    }
+
+    async function supabaseDelete(table, id) {
+      if (!useSupabase) return;
+      try {
+        const { error } = await supabaseClient.from(table).delete().eq('id', id);
+        if (error) throw error;
+      } catch (error) {
+        console.error(`Erro ao deletar de ${table}:`, error);
+      }
+    }
+
+    async function supabaseUpdateFiscal(data) {
+      if (!useSupabase) return;
+      try {
+        const { data: fisc } = await supabaseClient.from('fiscal').select('id').limit(1).single();
+        if (fisc) {
+          const { error } = await supabaseClient.from('fiscal').update(data).eq('id', fisc.id);
+          if (error) throw error;
+        }
+      } catch (error) {
+        console.error('Erro ao atualizar fiscal:', error);
+      }
+    }
+
     async function loadDB() {
+      // Tentar carregar do Supabase primeiro
+      if (useSupabase && supabaseClient) {
+        try {
+          console.log('Carregando dados do Supabase...');
+          
+          const [forn, contr, at, doc, mot, veic, not, it, fisc] = await Promise.all([
+            supabaseClient.from('fornecedores').select('*').order('created_at', { ascending: false }),
+            supabaseClient.from('contratos').select('*').order('created_at', { ascending: false }),
+            supabaseClient.from('atas').select('*').order('created_at', { ascending: false }),
+            supabaseClient.from('documentos').select('*').order('created_at', { ascending: false }),
+            supabaseClient.from('motoristas').select('*').order('nome'),
+            supabaseClient.from('veiculos').select('*').order('placa'),
+            supabaseClient.from('notas').select('*').order('created_at', { ascending: false }),
+            supabaseClient.from('itens').select('*').order('created_at', { ascending: false }),
+            supabaseClient.from('fiscal').select('*').limit(1).single()
+          ]);
+
+          DB.fornecedores = forn.data || [];
+          DB.contratos = contr.data || [];
+          DB.atas = at.data || [];
+          DB.documentos = doc.data || [];
+          DB.motoristas = mot.data || [];
+          DB.veiculos = veic.data || [];
+          DB.notas = not.data || [];
+          DB.itens = it.data || [];
+          if (fisc.data) DB.fiscal = fisc.data;
+
+          console.log('✓ Dados carregados do Supabase');
+          
+          // Salvar no LocalStorage como backup
+          localStorage.setItem("COMBUSTIVEL_DB", JSON.stringify(DB));
+          return;
+        } catch (error) {
+          console.error('Erro ao carregar do Supabase:', error);
+          console.warn('Usando LocalStorage como fallback...');
+        }
+      }
+
+      // Fallback: LocalStorage
       const raw = localStorage.getItem("COMBUSTIVEL_DB");
       if (raw) {
         Object.assign(DB, JSON.parse(raw));
@@ -1291,8 +1402,11 @@
 
         if (isEdit) {
           Object.assign(fornecedor, obj);
+          await supabaseUpdate('fornecedores', fornecedor.id, obj);
         } else {
-          DB.fornecedores.push({ id: uuid(), ...obj });
+          const newFornecedor = { id: uuid(), ...obj };
+          DB.fornecedores.push(newFornecedor);
+          await supabaseInsert('fornecedores', newFornecedor);
         }
 
         saveDB();
@@ -1303,9 +1417,10 @@
     }
 
     window.editFornecedor = (id) => showFornecedorModal(id);
-    window.deleteFornecedor = (id) => {
+    window.deleteFornecedor = async (id) => {
       if (!confirm('Deseja realmente excluir este fornecedor?')) return;
       DB.fornecedores = DB.fornecedores.filter(f => f.id !== id);
+      await supabaseDelete('fornecedores', id);
       saveDB();
       renderRoute();
       showToast('Fornecedor excluído com sucesso!', 'success');
@@ -1435,8 +1550,11 @@
 
         if (isEdit) {
           Object.assign(contrato, obj);
+          await supabaseUpdate('contratos', contrato.id, obj);
         } else {
-          DB.contratos.push({ id: uuid(), ...obj });
+          const newContrato = { id: uuid(), ...obj };
+          DB.contratos.push(newContrato);
+          await supabaseInsert('contratos', newContrato);
         }
 
         saveDB();
@@ -1447,9 +1565,10 @@
     }
 
     window.editContrato = (id) => showContratoModal(id);
-    window.deleteContrato = (id) => {
+    window.deleteContrato = async (id) => {
       if (!confirm('Deseja realmente excluir este contrato?')) return;
       DB.contratos = DB.contratos.filter(c => c.id !== id);
+      await supabaseDelete('contratos', id);
       saveDB();
       renderRoute();
       showToast('Contrato excluído com sucesso!', 'success');
@@ -1594,9 +1713,12 @@
           const index = DB.atas.findIndex(a => a.id === id);
           if (index !== -1) {
             DB.atas[index] = { ...DB.atas[index], ...data };
+            await supabaseUpdate('atas', id, data);
           }
         } else {
-          DB.atas.push({ id: uuid(), ...data });
+          const newAta = { id: uuid(), ...data };
+          DB.atas.push(newAta);
+          await supabaseInsert('atas', newAta);
         }
 
         saveDB();
@@ -1607,9 +1729,10 @@
     }
 
     window.editAta = (id) => showAtaModal(id);
-    window.deleteAta = (id) => {
+    window.deleteAta = async (id) => {
       if (!confirm('Deseja realmente excluir esta ata?')) return;
       DB.atas = DB.atas.filter(a => a.id !== id);
+      await supabaseDelete('atas', id);
       saveDB();
       renderRoute();
       showToast('Ata excluída com sucesso!', 'success');
@@ -1820,8 +1943,11 @@
 
         if (isEdit) {
           Object.assign(doc, obj);
+          await supabaseUpdate('documentos', doc.id, obj);
         } else {
-          DB.documentos.push({ id: uuid(), ...obj });
+          const newDoc = { id: uuid(), ...obj };
+          DB.documentos.push(newDoc);
+          await supabaseInsert('documentos', newDoc);
         }
 
         saveDB();
@@ -1832,9 +1958,10 @@
     }
 
     window.editDocumento = (id) => showDocumentoModal(id);
-    window.deleteDocumento = (id) => {
+    window.deleteDocumento = async (id) => {
       if (!confirm('Deseja realmente excluir este documento?')) return;
       DB.documentos = DB.documentos.filter(d => d.id !== id);
+      await supabaseDelete('documentos', id);
       saveDB();
       renderRoute();
       showToast('Documento excluído com sucesso!', 'success');
@@ -1954,8 +2081,11 @@
 
         if (isEdit) {
           Object.assign(motorista, obj);
+          await supabaseUpdate('motoristas', motorista.id, obj);
         } else {
-          DB.motoristas.push({ id: uuid(), ...obj });
+          const newMotorista = { id: uuid(), ...obj };
+          DB.motoristas.push(newMotorista);
+          await supabaseInsert('motoristas', newMotorista);
         }
 
         saveDB();
@@ -1966,9 +2096,10 @@
     }
 
     window.editMotorista = (id) => showMotoristaModal(id);
-    window.deleteMotorista = (id) => {
+    window.deleteMotorista = async (id) => {
       if (!confirm('Deseja realmente excluir este motorista?')) return;
       DB.motoristas = DB.motoristas.filter(m => m.id !== id);
+      await supabaseDelete('motoristas', id);
       saveDB();
       renderRoute();
       showToast('Motorista excluído com sucesso!', 'success');
@@ -2085,8 +2216,11 @@
 
         if (isEdit) {
           Object.assign(veiculo, obj);
+          await supabaseUpdate('veiculos', veiculo.id, obj);
         } else {
-          DB.veiculos.push({ id: uuid(), ...obj });
+          const newVeiculo = { id: uuid(), ...obj };
+          DB.veiculos.push(newVeiculo);
+          await supabaseInsert('veiculos', newVeiculo);
         }
 
         saveDB();
@@ -2097,9 +2231,10 @@
     }
 
     window.editVeiculo = (id) => showVeiculoModal(id);
-    window.deleteVeiculo = (id) => {
+    window.deleteVeiculo = async (id) => {
       if (!confirm('Deseja realmente excluir este veículo?')) return;
       DB.veiculos = DB.veiculos.filter(v => v.id !== id);
+      await supabaseDelete('veiculos', id);
       saveDB();
       renderRoute();
       showToast('Veículo excluído com sucesso!', 'success');
@@ -2162,10 +2297,12 @@
 
       lucide.createIcons();
 
-      qs("#formFiscal").onsubmit = (e) => {
+      qs("#formFiscal").onsubmit = async (e) => {
         e.preventDefault();
         const data = new FormData(e.target);
-        Object.assign(DB.fiscal, Object.fromEntries(data.entries()));
+        const fiscalData = Object.fromEntries(data.entries());
+        Object.assign(DB.fiscal, fiscalData);
+        await supabaseUpdateFiscal(fiscalData);
         saveDB();
         showToast('Dados do fiscal salvos com sucesso!', 'success');
       };
@@ -2420,7 +2557,7 @@
       qs("#selCombustivel", modal).onchange = updateEmpenhos;
       qs("#selEmpenho", modal).onchange = updateVinculoInfo;
 
-      qs("#btnSaveNota", modal).onclick = () => {
+      qs("#btnSaveNota", modal).onclick = async () => {
         const form = qs("#formNota", modal);
         if (!form.checkValidity()) {
           form.reportValidity();
@@ -2438,6 +2575,7 @@
         };
 
         DB.notas.push(novaNota);
+        await supabaseInsert('notas', novaNota);
         saveDB();
         modal.remove();
         showToast('Nota fiscal criada com sucesso!', 'success');
@@ -2619,6 +2757,7 @@
           };
 
           DB.itens.push(novoItem);
+          await supabaseInsert('itens', novoItem);
           saveDB();
           modal.remove();
           showToast('Abastecimento adicionado!', 'success');
@@ -2654,9 +2793,10 @@
       }
     }
 
-    window.deleteAbastecimento = (itemId, notaId) => {
+    window.deleteAbastecimento = async (itemId, notaId) => {
       if (!confirm('Deseja realmente excluir este abastecimento?')) return;
       DB.itens = DB.itens.filter(it => it.id !== itemId);
+      await supabaseDelete('itens', itemId);
       saveDB();
       showToast('Abastecimento excluído!', 'success');
       
@@ -2666,12 +2806,15 @@
       gerenciarNota(notaId);
     };
 
-    window.deleteNota = (id) => {
+    window.deleteNota = async (id) => {
       if (!confirm('Deseja realmente excluir esta nota fiscal?')) return;
       
-      // Remover itens relacionados
+      // Remover itens relacionados (cascata já configurada no Supabase via ON DELETE CASCADE)
       DB.itens = DB.itens.filter(it => it.nota_fiscal_id !== id);
       DB.notas = DB.notas.filter(n => n.id !== id);
+      
+      // Deletar do Supabase (itens são deletados automaticamente por cascata)
+      await supabaseDelete('notas', id);
       
       saveDB();
       renderRoute();
