@@ -591,6 +591,28 @@
       100% { transform: rotate(360deg); }
     }
 
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+    }
+
     /* Utilities */
     .text-primary { color: var(--primary) !important; }
     .text-success { color: var(--success) !important; }
@@ -685,6 +707,8 @@
       .anexo-landscape {
         page-break-before: always;
         page-break-after: avoid;
+        page-break-inside: avoid;
+        overflow: hidden;
       }
       
       @page anexo {
@@ -1322,6 +1346,24 @@
           </div>
         </div>
 
+        <div class="row g-4 mb-4">
+          <div class="col-12">
+            <div class="card-modern">
+              <div class="card-header-modern" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 class="card-title" style="margin: 0;">
+                  <i data-lucide="alert-circle" style="width: 20px; height: 20px; margin-right: 8px;"></i>
+                  Monitoramento de Empenhos
+                </h3>
+                <span class="badge-modern badge-warning" id="empenhosCriticos" style="display: none;">
+                  <i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i>
+                  Empenhos Críticos
+                </span>
+              </div>
+              <div id="listaEmpenhos"></div>
+            </div>
+          </div>
+        </div>
+
         <div class="row g-4">
           <div class="col-md-6">
             <div class="card-modern">
@@ -1367,6 +1409,213 @@
           </div>
         </div>
       `;
+
+      // Calcular e renderizar empenhos
+      const empenhos = DB.documentos.filter(d => d.tipo_documento === DOC_TIPO.EMP);
+      let empenhosComAlerta = 0;
+      
+      const empenhosHtml = empenhos.map(emp => {
+        const saldoInicial = emp.saldo_atual || 0;
+        
+        // Calcular valor consumido (soma dos itens das notas vinculadas a este empenho)
+        const notasDoEmpenho = DB.notas.filter(n => n.empenho_id === emp.id);
+        let valorConsumido = 0;
+        
+        notasDoEmpenho.forEach(nota => {
+          const itensNota = DB.itens.filter(it => it.nota_fiscal_id === nota.id);
+          itensNota.forEach(item => {
+            valorConsumido += (item.qtd_litros || 0) * (item.valor_unitario || 0);
+          });
+        });
+        
+        const saldoRestante = saldoInicial - valorConsumido;
+        const percentualConsumido = saldoInicial > 0 ? (valorConsumido / saldoInicial) * 100 : 0;
+        
+        // Determinar status
+        let statusClass = 'success';
+        let statusIcon = 'check-circle';
+        let statusText = 'Normal';
+        let alertaHtml = '';
+        
+        if (percentualConsumido >= 90) {
+          statusClass = 'danger';
+          statusIcon = 'alert-octagon';
+          statusText = 'Crítico';
+          empenhosComAlerta++;
+          alertaHtml = `
+            <div style="margin-top: 8px; padding: 8px; background: #fee2e2; border-left: 3px solid #dc2626; border-radius: 4px; font-size: 13px;">
+              <strong>⚠️ EMPENHO CRÍTICO (${fmtNum(percentualConsumido, 1)}%):</strong><br>
+              Providenciar URGENTEMENTE novo empenho. Saldo insuficiente para continuar abastecimentos.
+            </div>
+          `;
+        } else if (percentualConsumido >= 70) {
+          statusClass = 'warning';
+          statusIcon = 'alert-triangle';
+          statusText = 'Atenção';
+          empenhosComAlerta++;
+          alertaHtml = `
+            <div style="margin-top: 8px; padding: 8px; background: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 4px; font-size: 13px;">
+              <strong>⚠️ ALERTA (${fmtNum(percentualConsumido, 1)}%):</strong><br>
+              Providenciar novo empenho. Este empenho está próximo do limite.
+            </div>
+          `;
+        }
+        
+        return `
+          <div style="padding: 16px; border-bottom: 1px solid #e5e7eb;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+              <div>
+                <div style="font-weight: 600; font-size: 15px; margin-bottom: 4px;">
+                  Empenho ${escapeHtml(emp.numero)}
+                </div>
+                <div style="color: #64748b; font-size: 13px;">
+                  ${COMB_LABEL[emp.combustivel]} | Pré-empenho: ${escapeHtml(emp.pre_empenho || '-')}
+                </div>
+              </div>
+              <span class="badge-modern badge-${statusClass}">
+                <i data-lucide="${statusIcon}" style="width: 14px; height: 14px;"></i>
+                ${statusText}
+              </span>
+            </div>
+            
+            <div style="margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+                <span>Saldo Inicial:</span>
+                <strong>${fmtBRL(saldoInicial)}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+                <span>Valor Consumido:</span>
+                <strong style="color: #dc2626;">${fmtBRL(valorConsumido)}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 14px; margin-top: 8px;">
+                <span><strong>Saldo Restante:</strong></span>
+                <strong style="color: ${saldoRestante < saldoInicial * 0.3 ? '#dc2626' : '#059669'};">
+                  ${fmtBRL(saldoRestante)}
+                </strong>
+              </div>
+            </div>
+            
+            <div style="background: #e5e7eb; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 12px;">
+              <div style="background: ${percentualConsumido >= 90 ? '#dc2626' : percentualConsumido >= 70 ? '#f59e0b' : '#059669'}; height: 100%; width: ${Math.min(percentualConsumido, 100)}%; transition: width 0.3s ease;"></div>
+            </div>
+            <div style="text-align: right; font-size: 12px; color: #64748b; margin-top: 4px;">
+              ${fmtNum(percentualConsumido, 1)}% consumido
+            </div>
+            
+            ${alertaHtml}
+          </div>
+        `;
+      }).join('');
+      
+      const listaEmpenhos = qs('#listaEmpenhos');
+      if (listaEmpenhos) {
+        if (empenhos.length === 0) {
+          listaEmpenhos.innerHTML = `
+            <div style="padding: 32px; text-align: center; color: #64748b;">
+              <i data-lucide="inbox" style="width: 48px; height: 48px; margin-bottom: 12px;"></i>
+              <div>Nenhum empenho cadastrado</div>
+            </div>
+          `;
+        } else {
+          listaEmpenhos.innerHTML = empenhosHtml;
+        }
+      }
+      
+      // Mostrar badge de empenhos críticos se houver
+      const badgeCriticos = qs('#empenhosCriticos');
+      if (badgeCriticos && empenhosComAlerta > 0) {
+        badgeCriticos.style.display = 'inline-flex';
+        badgeCriticos.innerHTML = `
+          <i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i>
+          ${empenhosComAlerta} Empenho${empenhosComAlerta > 1 ? 's' : ''} em Alerta
+        `;
+      }
+      
+      lucide.createIcons();
+
+      // Sistema de notificação de empenhos críticos
+      if (empenhosComAlerta > 0) {
+        const empenhosCriticos = empenhos.filter(emp => {
+          const saldoInicial = emp.saldo_atual || 0;
+          const notasDoEmpenho = DB.notas.filter(n => n.empenho_id === emp.id);
+          let valorConsumido = 0;
+          notasDoEmpenho.forEach(nota => {
+            const itensNota = DB.itens.filter(it => it.nota_fiscal_id === nota.id);
+            itensNota.forEach(item => {
+              valorConsumido += (item.qtd_litros || 0) * (item.valor_unitario || 0);
+            });
+          });
+          const percentualConsumido = saldoInicial > 0 ? (valorConsumido / saldoInicial) * 100 : 0;
+          return percentualConsumido >= 70;
+        });
+        
+        const listaEmpenhosCriticos = empenhosCriticos.map(emp => {
+          const saldoInicial = emp.saldo_atual || 0;
+          const notasDoEmpenho = DB.notas.filter(n => n.empenho_id === emp.id);
+          let valorConsumido = 0;
+          notasDoEmpenho.forEach(nota => {
+            const itensNota = DB.itens.filter(it => it.nota_fiscal_id === nota.id);
+            itensNota.forEach(item => {
+              valorConsumido += (item.qtd_litros || 0) * (item.valor_unitario || 0);
+            });
+          });
+          const percentualConsumido = saldoInicial > 0 ? (valorConsumido / saldoInicial) * 100 : 0;
+          const saldoRestante = saldoInicial - valorConsumido;
+          
+          return `
+            <div style="padding: 12px; background: ${percentualConsumido >= 90 ? '#fee2e2' : '#fef3c7'}; border-radius: 8px; margin-bottom: 8px;">
+              <div style="font-weight: 600; margin-bottom: 4px;">
+                ${percentualConsumido >= 90 ? '🔴' : '⚠️'} Empenho ${escapeHtml(emp.numero)}
+              </div>
+              <div style="font-size: 13px; color: #64748b;">
+                ${COMB_LABEL[emp.combustivel]} | ${fmtNum(percentualConsumido, 1)}% consumido
+              </div>
+              <div style="font-size: 13px; margin-top: 4px;">
+                <strong>Saldo:</strong> ${fmtBRL(saldoRestante)} de ${fmtBRL(saldoInicial)}
+              </div>
+            </div>
+          `;
+        }).join('');
+        
+        // Criar notificação flutuante
+        setTimeout(() => {
+          const notificacao = el(`
+            <div style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px; background: white; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); border: 2px solid #f59e0b; animation: slideIn 0.3s ease;">
+              <div style="padding: 20px; border-bottom: 1px solid #e5e7eb;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                  <div style="width: 40px; height: 40px; background: #fef3c7; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="alert-triangle" style="width: 24px; height: 24px; color: #f59e0b;"></i>
+                  </div>
+                  <div style="flex: 1;">
+                    <div style="font-weight: 700; font-size: 16px;">Alerta de Empenhos</div>
+                    <div style="font-size: 13px; color: #64748b;">${empenhosComAlerta} empenho${empenhosComAlerta > 1 ? 's necessitam' : ' necessita'} atenção</div>
+                  </div>
+                  <button onclick="this.closest('div[style*=fixed]').remove()" style="border: none; background: none; cursor: pointer; padding: 4px;">
+                    <i data-lucide="x" style="width: 20px; height: 20px; color: #64748b;"></i>
+                  </button>
+                </div>
+              </div>
+              <div style="padding: 16px; max-height: 300px; overflow-y: auto;">
+                ${listaEmpenhosCriticos}
+                <div style="margin-top: 12px; padding: 12px; background: #f8fafc; border-radius: 8px; font-size: 13px;">
+                  <strong>Ação Requerida:</strong> Providenciar novos empenhos para garantir continuidade dos abastecimentos.
+                </div>
+              </div>
+            </div>
+          `);
+          
+          document.body.appendChild(notificacao);
+          lucide.createIcons();
+          
+          // Auto-fechar após 10 segundos
+          setTimeout(() => {
+            if (notificacao.parentNode) {
+              notificacao.style.animation = 'slideOut 0.3s ease';
+              setTimeout(() => notificacao.remove(), 300);
+            }
+          }, 10000);
+        }, 500);
+      }
 
       // Render chart
       const ctx = qs("#chartCombustivel");
@@ -3504,18 +3753,6 @@
           <div style="text-align: right; margin-bottom: 12px;">
             Rondonópolis/MT, ${dataAtual}
           </div>
-
-          <div style="margin-top: 80px; text-align: center;">
-            <div style="border-top: 1px solid #000; width: 300px; margin: 0 auto 8px auto;"></div>
-            <strong>${escapeHtml(DB.fiscal.nome)}</strong><br>
-            <span>FISCAL DE CONTRATO</span>
-          </div>
-
-          <div style="margin-top: 80px; text-align: center;">
-            <div style="border-top: 1px solid #000; width: 300px; margin: 0 auto 8px auto;"></div>
-            <strong>LUCIANO RODRIGUES</strong><br>
-            <span>SECRETÁRIO MUNICIPAL DE ADMINISTRAÇÃO, GESTÃO DE PESSOAS E INOVAÇÃO</span>
-          </div>
         </div>
         
         <div class="rpt anexo-landscape">
@@ -3581,10 +3818,16 @@
             <strong>TOTAL DO CÓDIGO DO ITEM: ${fmtNum(totalLitros)} Litros | Valor Total: R$ ${fmtNum(totalValor)}</strong>
           </div>
 
-          <div style="margin-top: 60px; text-align: center;">
+          <div style="margin-top: 30px; text-align: center;">
             <div style="border-top: 1px solid #000; width: 300px; margin: 0 auto 8px auto;"></div>
             <strong>${escapeHtml(DB.fiscal.nome)}</strong><br>
             <span>FISCAL DE CONTRATO</span>
+          </div>
+
+          <div style="margin-top: 40px; text-align: center;">
+            <div style="border-top: 1px solid #000; width: 300px; margin: 0 auto 8px auto;"></div>
+            <strong>LUCIANO RODRIGUES</strong><br>
+            <span>SECRETÁRIO MUNICIPAL DE ADMINISTRAÇÃO, GESTÃO DE PESSOAS E INOVAÇÃO</span>
           </div>
         </div>
       `;
