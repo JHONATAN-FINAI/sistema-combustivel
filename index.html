@@ -1490,14 +1490,20 @@
 
         const data = new FormData(form);
         const obj = Object.fromEntries(data.entries());
+        
+        // Filtrar apenas campos que existem no Supabase
+        const supabaseFields = {
+          razao_social: obj.razao_social,
+          cnpj: obj.cnpj
+        };
 
         if (isEdit) {
           Object.assign(fornecedor, obj);
-          await supabaseUpdate('fornecedores', fornecedor.id, obj);
+          await supabaseUpdate('fornecedores', fornecedor.id, supabaseFields);
         } else {
           const newFornecedor = { id: uuid(), ...obj };
           DB.fornecedores.push(newFornecedor);
-          await supabaseInsert('fornecedores', newFornecedor);
+          await supabaseInsert('fornecedores', { id: newFornecedor.id, ...supabaseFields });
         }
 
         saveDB();
@@ -2169,14 +2175,19 @@
 
         const data = new FormData(form);
         const obj = Object.fromEntries(data.entries());
+        
+        // Filtrar apenas campos que existem no Supabase
+        const supabaseFields = {
+          nome: obj.nome
+        };
 
         if (isEdit) {
           Object.assign(motorista, obj);
-          await supabaseUpdate('motoristas', motorista.id, obj);
+          await supabaseUpdate('motoristas', motorista.id, supabaseFields);
         } else {
           const newMotorista = { id: uuid(), ...obj };
           DB.motoristas.push(newMotorista);
-          await supabaseInsert('motoristas', newMotorista);
+          await supabaseInsert('motoristas', { id: newMotorista.id, ...supabaseFields });
         }
 
         saveDB();
@@ -2304,14 +2315,26 @@
 
         const data = new FormData(form);
         const obj = Object.fromEntries(data.entries());
+        
+        // Montar descrição para Supabase (modelo + ano)
+        let descricao = obj.modelo || '';
+        if (obj.ano) {
+          descricao = descricao ? `${descricao} ${obj.ano}` : obj.ano;
+        }
+        if (!descricao) descricao = obj.placa; // fallback
+        
+        const supabaseFields = {
+          placa: obj.placa,
+          descricao: descricao
+        };
 
         if (isEdit) {
           Object.assign(veiculo, obj);
-          await supabaseUpdate('veiculos', veiculo.id, obj);
+          await supabaseUpdate('veiculos', veiculo.id, supabaseFields);
         } else {
           const newVeiculo = { id: uuid(), ...obj };
           DB.veiculos.push(newVeiculo);
-          await supabaseInsert('veiculos', newVeiculo);
+          await supabaseInsert('veiculos', { id: newVeiculo.id, ...supabaseFields });
         }
 
         saveDB();
@@ -2660,13 +2683,29 @@
 
         const novaNota = {
           id: uuid(),
-          ...obj,
+          numero_nf: obj.numero_nf,
+          combustivel: obj.combustivel,
+          empenho_id: obj.empenho_id,
+          status: 'ABERTA',
+          data_emissao: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+          // Campos extras para LocalStorage (não vão para Supabase)
+          contrato_id: obj.contrato_id,
           valor_total: 0,
           finalizada_em: null
         };
+        
+        // Filtrar apenas campos que existem no Supabase
+        const supabaseFields = {
+          id: novaNota.id,
+          numero_nf: novaNota.numero_nf,
+          combustivel: novaNota.combustivel,
+          empenho_id: novaNota.empenho_id,
+          status: novaNota.status,
+          data_emissao: novaNota.data_emissao
+        };
 
         DB.notas.push(novaNota);
-        await supabaseInsert('notas', novaNota);
+        await supabaseInsert('notas', supabaseFields);
         saveDB();
         modal.remove();
         showToast('Nota fiscal criada com sucesso!', 'success');
@@ -2840,15 +2879,35 @@
           const novoItem = {
             id: uuid(),
             nota_fiscal_id: notaId,
-            produto: nota.combustivel,
-            ...obj,
+            veiculo_id: obj.veiculo_id || null,
+            motorista_id: obj.motorista_id || null,
+            data_abastecimento: obj.data_abastecimento,
+            hora: obj.hora || null,
             qtd_litros: qtd,
             valor_unitario: vUnit,
+            km: obj.km ? parseInt(obj.km) : null,
+            numero_doc: obj.numero_doc || null,
+            // Campos extras para LocalStorage (não vão para Supabase)
+            produto: nota.combustivel,
             valor_abastecimento: qtd * vUnit
+          };
+          
+          // Filtrar apenas campos que existem no Supabase
+          const supabaseFields = {
+            id: novoItem.id,
+            nota_fiscal_id: novoItem.nota_fiscal_id,
+            veiculo_id: novoItem.veiculo_id,
+            motorista_id: novoItem.motorista_id,
+            data_abastecimento: novoItem.data_abastecimento,
+            hora: novoItem.hora,
+            qtd_litros: novoItem.qtd_litros,
+            valor_unitario: novoItem.valor_unitario,
+            km: novoItem.km,
+            numero_doc: novoItem.numero_doc
           };
 
           DB.itens.push(novoItem);
-          await supabaseInsert('itens', novoItem);
+          await supabaseInsert('itens', supabaseFields);
           saveDB();
           modal.remove();
           showToast('Abastecimento adicionado!', 'success');
