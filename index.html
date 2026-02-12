@@ -690,8 +690,11 @@
     }
 
     .rpt .logo-box img {
-      max-width: 200px;
-      height: auto;
+      height: 100px;
+      width: auto;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto;
     }
 
     .rpt .title {
@@ -3359,7 +3362,7 @@
                 <th style="width: 60px; text-align: center;">Vlr Abast.</th>
                 <th style="width: 40px; text-align: center;">Hora</th>
                 <th style="width: 45px; text-align: center;">Km</th>
-                <th style="text-align: center;">Motorista</th>
+                <th style="min-width: 150px; text-align: center;">Motorista</th>
               </tr>
             </thead>
             <tbody>
@@ -3386,7 +3389,7 @@
                     <td style="text-align: center;">${fmtNum(valorAbast)}</td>
                     <td style="text-align: center;">${escapeHtml(it.hora || '')}</td>
                     <td style="text-align: center;">${escapeHtml(it.km || '')}</td>
-                    <td style="text-align: center;">${escapeHtml(m?.nome || '')}</td>
+                    <td style="min-width: 150px; text-align: center; white-space: normal; word-wrap: break-word;">${escapeHtml(m?.nome || '')}</td>
                   </tr>
                 `;
               }).join('')}
