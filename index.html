@@ -673,14 +673,14 @@
 
       @page {
         size: A4 portrait;
-        margin: 12mm;
+        margin: 15mm 12mm 15mm 12mm;
       }
       
       @media print {
-        /* Tentar minimizar margens do navegador */
+        /* Reduzir margens superiores e inferiores */
         @page {
-          margin-top: 0;
-          margin-bottom: 0;
+          margin-top: 10mm;
+          margin-bottom: 10mm;
           margin-left: 12mm;
           margin-right: 12mm;
         }
@@ -693,8 +693,8 @@
         /* Evitar quebras de página indesejadas */
         .rpt {
           page-break-after: auto;
-          orphans: 3;
-          widows: 3;
+          orphans: 2;
+          widows: 2;
         }
         
         /* Evitar espaços vazios */
@@ -713,7 +713,7 @@
       
       @page anexo {
         size: A4 landscape;
-        margin: 12mm;
+        margin: 10mm 8mm 10mm 8mm;
       }
       
       .anexo-landscape {
@@ -752,11 +752,11 @@
 
     .rpt .logo-box {
       text-align: center;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
 
     .rpt .logo-box img {
-      height: 100px;
+      height: 80px;
       width: auto;
       object-fit: contain;
       display: block;
@@ -767,18 +767,18 @@
       text-align: center;
       font-weight: 700;
       font-size: 14px;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
 
     .rpt .box {
       border: 1px solid #000;
-      padding: 8px;
-      margin-bottom: 8px;
+      padding: 6px;
+      margin-bottom: 6px;
     }
 
     .rpt .box-title {
       font-weight: 700;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .rpt .kv {
@@ -787,7 +787,7 @@
     }
 
     .rpt .kv td {
-      padding: 3px 4px;
+      padding: 2px 4px;
     }
 
     .rpt .kv .k {
@@ -3677,7 +3677,7 @@
       const printRoot = qs("#printRoot");
       printRoot.innerHTML = `
         <div class="rpt">
-          <div class="logo-box"><img src="https://advantagemidia.com/wp-content/uploads/2026/01/WhatsApp-Image-2026-01-15-at-10.31.14.jpeg" alt="Logo" style="height: 100px; width: auto;"></div>
+          <div class="logo-box"><img src="https://advantagemidia.com/wp-content/uploads/2026/01/WhatsApp-Image-2026-01-15-at-10.31.14.jpeg" alt="Logo" style="height: 80px; width: auto;"></div>
           <div class="title">RELATÓRIO ADMINISTRATIVO - PAGAMENTO</div>
           
           <div class="box">
@@ -3727,18 +3727,18 @@
             </table>
           </div>
 
-          <div style="margin: 24px 0; padding: 16px; border: 1px solid #ddd; background: #f9f9f9;">
-            <h6 style="margin-bottom: 12px;"><strong>1. ANÁLISE DO ${vinculoLabel}</strong></h6>
-            <p style="text-align: justify; line-height: 1.6;">
+          <div style="margin: 16px 0; padding: 12px; border: 1px solid #ddd; background: #f9f9f9;">
+            <h6 style="margin-bottom: 8px;"><strong>1. ANÁLISE DO ${vinculoLabel}</strong></h6>
+            <p style="text-align: justify; line-height: 1.5;">
               O presente ${vinculoLabel.toLowerCase()} com a empresa ${escapeHtml(f?.razao_social || '')} tem como objeto o fornecimento de combustível (${COMB_LABEL[nf.combustivel]}). 
               Durante o período fiscalizado foram realizados ${itens.length} abastecimentos, totalizando ${fmtNum(totalLitros)} litros. 
               Os serviços foram executados conforme as especificações contratuais, não havendo pendências ou irregularidades a serem relatadas.
             </p>
           </div>
 
-          <div style="margin: 24px 0; padding: 16px; border: 1px solid #ddd; background: #f9f9f9;">
-            <h6 style="margin-bottom: 12px;"><strong>2. RELATÓRIO DA PRESTAÇÃO DE SERVIÇO / DOS ITENS ADQUIRIDOS</strong></h6>
-            <p style="text-align: justify; line-height: 1.6;">
+          <div style="margin: 16px 0; padding: 12px; border: 1px solid #ddd; background: #f9f9f9;">
+            <h6 style="margin-bottom: 8px;"><strong>2. RELATÓRIO DA PRESTAÇÃO DE SERVIÇO / DOS ITENS ADQUIRIDOS</strong></h6>
+            <p style="text-align: justify; line-height: 1.5;">
               A relação detalhada dos ${itens.length} abastecimentos realizados no período, totalizando ${fmtNum(totalLitros)} litros no valor total de R$ ${fmtNum(totalValor)}, 
               encontra-se discriminada no <strong>ANEXO I</strong> deste relatório (página seguinte), 
               contendo informações de código do item, produto, quantidade, data, número do documento, placa, veículo, valores unitário e total, 
@@ -3746,7 +3746,7 @@
             </p>
           </div>
 
-          <p style="margin: 40px 0 60px 0; text-align: justify;">
+          <p style="margin: 20px 0 30px 0; text-align: justify;">
             Submetemos os autos (a)o para avaliação do Gestor do contrato, Secretário Municipal de Administração.
           </p>
 
@@ -3766,21 +3766,21 @@
           </div>
 
           <div class="section-title" style="font-size: 12px; margin: 8px 0;">ITENS ADQUIRIDOS</div>
-          <table class="items" style="font-size: 9px;">
+          <table class="items" style="font-size: 8px;">
             <thead>
               <tr>
-                <th style="width: 60px; text-align: center;">Cód. Item</th>
-                <th style="width: 110px; text-align: center;">Produto</th>
-                <th style="width: 70px; text-align: center;">Qtde (L)</th>
-                <th style="width: 85px; text-align: center;">Data</th>
-                <th style="width: 90px; text-align: center;">N° Doc.</th>
-                <th style="width: 75px; text-align: center;">Placa</th>
-                <th style="width: 180px; text-align: center;">Veículo</th>
-                <th style="width: 75px; text-align: center;">Vlr Unit.</th>
-                <th style="width: 85px; text-align: center;">Vlr Abast.</th>
-                <th style="width: 60px; text-align: center;">Hora</th>
-                <th style="width: 70px; text-align: center;">Km</th>
-                <th style="width: 200px; text-align: center;">Motorista</th>
+                <th style="width: 50px; text-align: center;">Cód. Item</th>
+                <th style="width: 90px; text-align: center;">Produto</th>
+                <th style="width: 55px; text-align: center;">Qtde (L)</th>
+                <th style="width: 70px; text-align: center;">Data</th>
+                <th style="width: 70px; text-align: center;">N° Doc.</th>
+                <th style="width: 65px; text-align: center;">Placa</th>
+                <th style="width: 150px; text-align: center;">Veículo</th>
+                <th style="width: 60px; text-align: center;">Vlr Unit.</th>
+                <th style="width: 70px; text-align: center;">Vlr Abast.</th>
+                <th style="width: 45px; text-align: center;">Hora</th>
+                <th style="width: 55px; text-align: center;">Km</th>
+                <th style="text-align: center;">Motorista</th>
               </tr>
             </thead>
             <tbody>
@@ -3814,17 +3814,17 @@
             </tbody>
           </table>
 
-          <div style="margin: 16px 0; padding: 10px; background: #f9f9f9; border: 1px solid #ddd; font-size: 11px;">
+          <div style="margin: 12px 0; padding: 8px; background: #f9f9f9; border: 1px solid #ddd; font-size: 10px;">
             <strong>TOTAL DO CÓDIGO DO ITEM: ${fmtNum(totalLitros)} Litros | Valor Total: R$ ${fmtNum(totalValor)}</strong>
           </div>
 
-          <div style="margin-top: 30px; text-align: center;">
+          <div style="margin-top: 24px; text-align: center;">
             <div style="border-top: 1px solid #000; width: 300px; margin: 0 auto 8px auto;"></div>
             <strong>${escapeHtml(DB.fiscal.nome)}</strong><br>
             <span>FISCAL DE CONTRATO</span>
           </div>
 
-          <div style="margin-top: 40px; text-align: center;">
+          <div style="margin-top: 32px; text-align: center;">
             <div style="border-top: 1px solid #000; width: 300px; margin: 0 auto 8px auto;"></div>
             <strong>LUCIANO RODRIGUES</strong><br>
             <span>SECRETÁRIO MUNICIPAL DE ADMINISTRAÇÃO, GESTÃO DE PESSOAS E INOVAÇÃO</span>
