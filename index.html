@@ -653,10 +653,38 @@
         size: A4 portrait;
         margin: 12mm;
       }
+      
+      @media print {
+        /* Tentar minimizar margens do navegador */
+        @page {
+          margin-top: 0;
+          margin-bottom: 0;
+          margin-left: 12mm;
+          margin-right: 12mm;
+        }
+        
+        body {
+          margin: 0;
+          padding: 0;
+        }
+        
+        /* Evitar quebras de página indesejadas */
+        .rpt {
+          page-break-after: auto;
+          orphans: 3;
+          widows: 3;
+        }
+        
+        /* Evitar espaços vazios */
+        * {
+          max-width: 100%;
+        }
+      }
 
       /* Página landscape para anexo */
       .anexo-landscape {
         page-break-before: always;
+        page-break-after: avoid;
       }
       
       @page anexo {
@@ -2559,6 +2587,16 @@
                     <option value="">Primeiro selecione o combustível</option>
                   </select>
                 </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div class="form-group">
+                    <label class="form-label">Período Início *</label>
+                    <input type="date" class="form-control-modern" name="periodo_inicio" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Período Fim *</label>
+                    <input type="date" class="form-control-modern" name="periodo_fim" required>
+                  </div>
+                </div>
                 <div class="form-group mb-0" id="infoVinculo" style="display:none;">
                   <label class="form-label">Vinculado a:</label>
                   <div class="form-control-modern" style="background: #f8fafc; color: #64748b;" id="textoVinculo"></div>
@@ -2686,6 +2724,8 @@
           numero_nf: obj.numero_nf,
           combustivel: obj.combustivel,
           empenho_id: obj.empenho_id,
+          periodo_inicio: obj.periodo_inicio,
+          periodo_fim: obj.periodo_fim,
           status: 'ABERTA',
           data_emissao: new Date().toISOString().split('T')[0], // YYYY-MM-DD
           // Campos extras para LocalStorage (não vão para Supabase)
@@ -2700,6 +2740,8 @@
           numero_nf: novaNota.numero_nf,
           combustivel: novaNota.combustivel,
           empenho_id: novaNota.empenho_id,
+          periodo_inicio: novaNota.periodo_inicio,
+          periodo_fim: novaNota.periodo_fim,
           status: novaNota.status,
           data_emissao: novaNota.data_emissao
         };
@@ -3431,7 +3473,7 @@
 
           <div class="box">
             <table class="kv">
-              <tr><td class="k">PERÍODO FISCALIZADO:</td><td>${itens.length > 0 ? isoToBR(itens[0].data_abastecimento) + ' a ' + isoToBR(itens[itens.length - 1].data_abastecimento) : '-'}</td></tr>
+              <tr><td class="k">PERÍODO FISCALIZADO:</td><td>${nf.periodo_inicio && nf.periodo_fim ? isoToBR(nf.periodo_inicio) + ' a ' + isoToBR(nf.periodo_fim) : (itens.length > 0 ? isoToBR(itens[0].data_abastecimento) + ' a ' + isoToBR(itens[itens.length - 1].data_abastecimento) : '-')}</td></tr>
               <tr><td class="k">RELATÓRIO:</td><td>( X ) MENSAL &nbsp;&nbsp;&nbsp;&nbsp; ( &nbsp; ) QUADRIMESTRAL</td></tr>
             </table>
           </div>
@@ -3483,7 +3525,7 @@
           <div style="margin: 12px 0; font-size: 11px;">
             <strong>NOTA FISCAL Nº:</strong> ${escapeHtml(nf.numero_nf)} &nbsp;&nbsp;&nbsp;
             <strong>EMPENHO Nº:</strong> ${escapeHtml(emp?.numero || '')} &nbsp;&nbsp;&nbsp;
-            <strong>PERÍODO:</strong> ${itens.length > 0 ? isoToBR(itens[0].data_abastecimento) + ' a ' + isoToBR(itens[itens.length - 1].data_abastecimento) : '-'}
+            <strong>PERÍODO:</strong> ${nf.periodo_inicio && nf.periodo_fim ? isoToBR(nf.periodo_inicio) + ' a ' + isoToBR(nf.periodo_fim) : (itens.length > 0 ? isoToBR(itens[0].data_abastecimento) + ' a ' + isoToBR(itens[itens.length - 1].data_abastecimento) : '-')}
           </div>
 
           <div class="section-title" style="font-size: 12px; margin: 8px 0;">ITENS ADQUIRIDOS</div>
@@ -3548,7 +3590,17 @@
       `;
       
       console.log('✅ Relatório gerado');
-      setTimeout(() => window.print(), 100);
+      
+      // Instruções para remover cabeçalhos/rodapés do navegador
+      setTimeout(() => {
+        alert('INSTRUÇÕES DE IMPRESSÃO:\n\n' +
+              '1. Na janela de impressão, clique em "Mais configurações"\n' +
+              '2. DESMARQUE a opção "Cabeçalhos e rodapés"\n' +
+              '3. Isso removerá a data/hora e URL da impressão\n\n' +
+              'Chrome/Edge: "Mais configurações" → Desmarcar "Cabeçalhos e rodapés"\n' +
+              'Firefox: "Configuração de página" → Desmarcar headers/footers');
+        window.print();
+      }, 100);
     }
 
     window.printRelatorioByNF = (nfId) => {
