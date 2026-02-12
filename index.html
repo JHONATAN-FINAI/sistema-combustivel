@@ -3296,8 +3296,8 @@
             <table class="kv">
               <tr><td class="k">EMPRESA:</td><td colspan="3">${escapeHtml(f?.razao_social || '')}</td></tr>
               <tr><td class="k">CNPJ:</td><td>${escapeHtml(f?.cnpj || '')}</td><td class="k" style="padding-left: 40px;">VIGÊNCIA DO ${vinculoLabel}:</td><td>${vigenciaFormatada}</td></tr>
-              <tr><td class="k">PREGÃO:</td><td>${escapeHtml(vinculo?.pregao || '-')}</td><td class="k" style="padding-left: 40px;">${vinculoTituloLabel}:</td><td>${escapeHtml(vinculo?.numero || '')}</td></tr>
-              <tr><td class="k">MODALIDADE:</td><td colspan="3">${vinculo?.modalidade || 'PREGÃO ELETRÔNICO'}</td></tr>
+              <tr><td class="k">PREGÃO:</td><td>${escapeHtml(vinculo?.pregao || '-')}</td><td class="k" style="padding-left: 40px;">${vinculoTituloLabel}:</td><td>${escapeHtml(vinculo?.numero || '-')}</td></tr>
+              <tr><td class="k">MODALIDADE:</td><td colspan="3">${escapeHtml(vinculo?.modalidade || 'PREGÃO ELETRÔNICO')}</td></tr>
               <tr><td class="k">OBJETO LICITADO:</td><td colspan="3">${escapeHtml(vinculo?.objeto || '')}</td></tr>
             </table>
           </div>
@@ -3347,7 +3347,48 @@
             </p>
           </div>
 
-          <div class="section-title">2. RELATÓRIO DA PRESTAÇÃO DE SERVIÇO / DOS ITENS ADQUIRIDOS</div>
+          <div style="margin: 24px 0; padding: 16px; border: 1px solid #ddd; background: #f9f9f9;">
+            <h6 style="margin-bottom: 12px;"><strong>2. RELATÓRIO DA PRESTAÇÃO DE SERVIÇO / DOS ITENS ADQUIRIDOS</strong></h6>
+            <p style="text-align: justify; line-height: 1.6;">
+              A relação detalhada dos ${itens.length} abastecimentos realizados no período, totalizando ${fmtNum(totalLitros)} litros no valor total de R$ ${fmtNum(totalValor)}, 
+              encontra-se discriminada no <strong>ANEXO I</strong> deste relatório (página seguinte), 
+              contendo informações de código do item, produto, quantidade, data, número do documento, placa, veículo, valores unitário e total, 
+              horário, quilometragem e motorista responsável.
+            </p>
+          </div>
+
+          <p style="margin: 40px 0 60px 0; text-align: justify;">
+            Submetemos os autos (a)o para avaliação do Gestor do contrato, Secretário Municipal de Administração.
+          </p>
+
+          <div style="text-align: right; margin-bottom: 12px;">
+            Rondonópolis/MT, ${dataAtual}
+          </div>
+
+          <div style="margin-top: 80px; text-align: center;">
+            <div style="border-top: 1px solid #000; width: 300px; margin: 0 auto 8px auto;"></div>
+            <strong>${escapeHtml(DB.fiscal.nome)}</strong><br>
+            <span>FISCAL DE CONTRATO</span>
+          </div>
+
+          <div style="margin-top: 80px; text-align: center;">
+            <div style="border-top: 1px solid #000; width: 300px; margin: 0 auto 8px auto;"></div>
+            <strong>LUCIANO RODRIGUES</strong><br>
+            <span>SECRETÁRIO MUNICIPAL DE ADMINISTRAÇÃO, GESTÃO DE PESSOAS E INOVAÇÃO</span>
+          </div>
+        </div>
+        
+        <div class="rpt" style="page-break-before: always;">
+          <div class="logo-box"><img src="https://advantagemidia.com/wp-content/uploads/2026/01/WhatsApp-Image-2026-01-15-at-10.31.14.jpeg" alt="Logo" style="height: 100px; width: auto;"></div>
+          <div class="title">ANEXO I - RELATÓRIO DETALHADO DE ABASTECIMENTOS</div>
+          
+          <div style="margin: 16px 0;">
+            <strong>NOTA FISCAL Nº:</strong> ${escapeHtml(nf.numero_nf)} &nbsp;&nbsp;&nbsp;
+            <strong>EMPENHO Nº:</strong> ${escapeHtml(emp?.numero || '')} &nbsp;&nbsp;&nbsp;
+            <strong>PERÍODO:</strong> ${itens.length > 0 ? isoToBR(itens[0].data_abastecimento) + ' a ' + isoToBR(itens[itens.length - 1].data_abastecimento) : '-'}
+          </div>
+
+          <div class="section-title">ITENS ADQUIRIDOS</div>
           <table class="items">
             <thead>
               <tr>
@@ -3398,26 +3439,6 @@
 
           <div style="margin: 20px 0; padding: 12px; background: #f9f9f9; border: 1px solid #ddd;">
             <strong>TOTAL DO CÓDIGO DO ITEM: ${fmtNum(totalLitros)} Litros | Valor Total: R$ ${fmtNum(totalValor)}</strong>
-          </div>
-
-          <p style="margin: 40px 0 60px 0; text-align: justify;">
-            Submetemos os autos (a)o para avaliação do Gestor do contrato, Secretário Municipal de Administração.
-          </p>
-
-          <div style="text-align: right; margin-bottom: 12px;">
-            Rondonópolis/MT, ${dataAtual}
-          </div>
-
-          <div style="margin-top: 80px; text-align: center;">
-            <div style="border-top: 1px solid #000; width: 300px; margin: 0 auto 8px auto;"></div>
-            <strong>${escapeHtml(DB.fiscal.nome)}</strong><br>
-            <span>FISCAL DE CONTRATO</span>
-          </div>
-
-          <div style="margin-top: 80px; text-align: center;">
-            <div style="border-top: 1px solid #000; width: 300px; margin: 0 auto 8px auto;"></div>
-            <strong>LUCIANO RODRIGUES</strong><br>
-            <span>SECRETÁRIO MUNICIPAL DE ADMINISTRAÇÃO, GESTÃO DE PESSOAS E INOVAÇÃO</span>
           </div>
         </div>
       `;
