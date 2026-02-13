@@ -3010,7 +3010,9 @@
           periodo_inicio: novaNota.periodo_inicio,
           periodo_fim: novaNota.periodo_fim,
           status: novaNota.status,
-          data_emissao: novaNota.data_emissao
+          data_emissao: novaNota.data_emissao,
+          valor_total: novaNota.valor_total,
+          finalizada_em: novaNota.finalizada_em
         };
 
         DB.notas.push(novaNota);
@@ -3241,7 +3243,17 @@
             const emp = findById(DB.documentos, nota.empenho_id);
             if (emp) {
               emp.saldo_atual -= totalNF;
+              // Sincronizar empenho atualizado com Supabase
+              await supabaseUpdate('documentos', emp.id, { 
+                saldo_atual: emp.saldo_atual 
+              });
             }
+
+            // Sincronizar nota finalizada com Supabase
+            await supabaseUpdate('notas', nota.id, {
+              valor_total: nota.valor_total,
+              finalizada_em: nota.finalizada_em
+            });
 
             saveDB();
             modal.remove();
