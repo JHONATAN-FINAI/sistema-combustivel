@@ -1339,7 +1339,7 @@
       const totalNotas = DB.notas.filter(n => n.finalizada_em).length;
       const totalAbastecimentos = DB.itens.length;
       const totalLitros = DB.itens.reduce((sum, it) => sum + (it.qtd_litros || 0), 0);
-      const totalValor = DB.itens.reduce((sum, it) => sum + (it.valor_abastecimento || 0), 0);
+      const totalValor = DB.itens.reduce((sum, it) => sum + ((it.qtd_litros || 0) * (it.valor_unitario || 0)), 0);
       
       view.innerHTML = `
         <div class="stats-grid">
