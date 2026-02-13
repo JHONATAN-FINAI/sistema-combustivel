@@ -1044,6 +1044,14 @@
       });
     }
 
+    function fmtLitros(val) {
+      if (val == null) return "0,000";
+      return Number(val).toLocaleString("pt-BR", {
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3
+      });
+    }
+
     function fmtBRL(val) {
       if (val == null) return "R$ 0,00";
       return "R$ " + fmtNum(val);
@@ -1363,7 +1371,7 @@
             <div class="stat-icon">
               <i data-lucide="droplet"></i>
             </div>
-            <div class="stat-value">${fmtNum(totalLitros)}</div>
+            <div class="stat-value">${fmtLitros(totalLitros)}</div>
             <div class="stat-label">Litros Totais</div>
           </div>
 
@@ -3107,7 +3115,7 @@
                     </div>
                     <div class="col-md-3">
                       <label class="form-label">Qtd Litros *</label>
-                      <input type="number" step="0.01" class="form-control-modern" name="qtd_litros" required>
+                      <input type="number" step="0.001" class="form-control-modern" name="qtd_litros" required>
                     </div>
                     <div class="col-md-3">
                       <label class="form-label">Valor Unit (R$) *</label>
@@ -3156,7 +3164,7 @@
                             <td>${isoToBR(it.data_abastecimento)} ${it.hora || ''}</td>
                             <td>${escapeHtml(v?.placa || '-')}</td>
                             <td>${escapeHtml(m?.nome || '-')}</td>
-                            <td class="text-end">${fmtNum(it.qtd_litros)}</td>
+                            <td class="text-end">${fmtLitros(it.qtd_litros)}</td>
                             <td class="text-end">${fmtBRL(it.valor_unitario)}</td>
                             <td class="text-end">${fmtBRL(it.valor_abastecimento)}</td>
                             ${!nota.finalizada_em ? `
@@ -3357,7 +3365,7 @@
                       </td>
                       <td>${escapeHtml(v?.placa || '-')}</td>
                       <td>${escapeHtml(m?.nome || '-')}</td>
-                      <td class="text-end">${fmtNum(it.qtd_litros)}</td>
+                      <td class="text-end">${fmtLitros(it.qtd_litros)}</td>
                       <td class="text-end">${fmtBRL(it.valor_abastecimento)}</td>
                       <td class="text-end">${it.km || '-'}</td>
                     </tr>
@@ -3536,7 +3544,7 @@
                     <td>${escapeHtml(nf?.numero_nf || "")}</td>
                     <td>${escapeHtml(v?.placa || "")}</td>
                     <td>${escapeHtml(it.numero_doc || "")}</td>
-                    <td class="text-end">${fmtNum(it.qtd_litros)}</td>
+                    <td class="text-end">${fmtLitros(it.qtd_litros)}</td>
                     <td class="text-end">${fmtBRL(it.valor_unitario)}</td>
                     <td class="text-end">${fmtBRL(it.valor_abastecimento)}</td>
                     <td>${escapeHtml(m?.nome || "")}</td>
@@ -3609,7 +3617,7 @@
               ${itens.map(it => {
                 const nf = findById(DB.notas, it.nota_fiscal_id);
                 const v = findById(DB.veiculos, it.veiculo_id);
-                return `<tr><td>${isoToBR(it.data_abastecimento)}</td><td>${escapeHtml(nf?.numero_nf || '')}</td><td>${escapeHtml(v?.placa || '')}</td><td class="text-end">${fmtNum(it.qtd_litros)}</td><td class="text-end">${fmtBRL(it.valor_abastecimento)}</td></tr>`;
+                return `<tr><td>${isoToBR(it.data_abastecimento)}</td><td>${escapeHtml(nf?.numero_nf || '')}</td><td>${escapeHtml(v?.placa || '')}</td><td class="text-end">${fmtLitros(it.qtd_litros)}</td><td class="text-end">${fmtBRL(it.valor_abastecimento)}</td></tr>`;
               }).join("")}
             </tbody>
           </table>
@@ -3773,7 +3781,7 @@
             <h6 style="margin-bottom: 8px;"><strong>1. ANÁLISE DO ${vinculoLabel}</strong></h6>
             <p style="text-align: justify; line-height: 1.5;">
               O presente ${vinculoLabel.toLowerCase()} com a empresa ${escapeHtml(f?.razao_social || '')} tem como objeto o fornecimento de combustível (${COMB_LABEL[nf.combustivel]}). 
-              Durante o período fiscalizado foram realizados ${itens.length} abastecimentos, totalizando ${fmtNum(totalLitros)} litros. 
+              Durante o período fiscalizado foram realizados ${itens.length} abastecimentos, totalizando ${fmtLitros(totalLitros)} litros. 
               Os serviços foram executados conforme as especificações contratuais, não havendo pendências ou irregularidades a serem relatadas.
             </p>
           </div>
@@ -3781,7 +3789,7 @@
           <div style="margin: 16px 0; padding: 12px; border: 1px solid #ddd; background: #f9f9f9;">
             <h6 style="margin-bottom: 8px;"><strong>2. RELATÓRIO DA PRESTAÇÃO DE SERVIÇO / DOS ITENS ADQUIRIDOS</strong></h6>
             <p style="text-align: justify; line-height: 1.5;">
-              A relação detalhada dos ${itens.length} abastecimentos realizados no período, totalizando ${fmtNum(totalLitros)} litros no valor total de R$ ${fmtNum(totalValor)}, 
+              A relação detalhada dos ${itens.length} abastecimentos realizados no período, totalizando ${fmtLitros(totalLitros)} litros no valor total de R$ ${fmtNum(totalValor)}, 
               encontra-se discriminada no <strong>ANEXO I</strong> deste relatório (página seguinte), 
               contendo informações de código do item, produto, quantidade, data, número do documento, placa, veículo, valores unitário e total, 
               horário, quilometragem e motorista responsável.
@@ -3840,7 +3848,7 @@
                   <tr>
                     <td style="text-align: center;">${COMB_CODIGO[nf.combustivel]}</td>
                     <td style="text-align: center;">${COMB_LABEL[nf.combustivel]}</td>
-                    <td style="text-align: center;">${fmtNum(it.qtd_litros)}</td>
+                    <td style="text-align: center;">${fmtLitros(it.qtd_litros)}</td>
                     <td style="text-align: center;">${isoToBR(it.data_abastecimento)}</td>
                     <td style="text-align: center;">${escapeHtml(it.numero_doc || '')}</td>
                     <td style="text-align: center;">${escapeHtml(v?.placa || '')}</td>
@@ -3857,7 +3865,7 @@
           </table>
 
           <div style="margin: 12px 0; padding: 8px; background: #f9f9f9; border: 1px solid #ddd; font-size: 10px;">
-            <strong>TOTAL DO CÓDIGO DO ITEM: ${fmtNum(totalLitros)} Litros | Valor Total: R$ ${fmtNum(totalValor)}</strong>
+            <strong>TOTAL DO CÓDIGO DO ITEM: ${fmtLitros(totalLitros)} Litros | Valor Total: R$ ${fmtNum(totalValor)}</strong>
           </div>
 
           <div style="margin-top: 60px; text-align: center;">
@@ -3968,7 +3976,7 @@
                     <td>${escapeHtml(v?.placa || "")}</td>
                     <td>${escapeHtml(m?.nome || "")}</td>
                     <td>${escapeHtml(it.numero_doc || "")}</td>
-                    <td class="text-end">${fmtNum(it.qtd_litros)}</td>
+                    <td class="text-end">${fmtLitros(it.qtd_litros)}</td>
                     <td class="text-end">${fmtBRL(it.valor_unitario)}</td>
                     <td class="text-end">${fmtBRL(it.valor_abastecimento)}</td>
                     <td class="text-end">${it.km || ""}</td>
@@ -3979,7 +3987,7 @@
             <tfoot>
               <tr>
                 <td colspan="4" class="text-end"><b>TOTAL GERAL</b></td>
-                <td class="text-end"><b>${fmtNum(itens.reduce((s, x) => s + (x.qtd_litros || 0), 0))} L</b></td>
+                <td class="text-end"><b>${fmtLitros(itens.reduce((s, x) => s + (x.qtd_litros || 0), 0))} L</b></td>
                 <td></td>
                 <td class="text-end"><b>${fmtBRL(itens.reduce((s, x) => s + (x.valor_abastecimento || 0), 0))}</b></td>
                 <td></td>
