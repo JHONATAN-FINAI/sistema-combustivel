@@ -706,9 +706,18 @@
       /* Página landscape para anexo */
       .anexo-landscape {
         page-break-before: always;
-        page-break-after: avoid;
-        page-break-inside: avoid;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+        break-after: avoid !important;
+        break-inside: avoid !important;
         overflow: hidden;
+        display: block;
+      }
+      
+      /* Forçar anexo a ser a última página */
+      .anexo-landscape * {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
       }
       
       @page anexo {
@@ -748,6 +757,15 @@
       font-family: Arial, Helvetica, sans-serif;
       font-size: 12px;
       color: #000;
+      orphans: 2;
+      widows: 2;
+    }
+    
+    /* Evitar quebra de página após último elemento */
+    .rpt:last-child,
+    .rpt > *:last-child {
+      page-break-after: avoid !important;
+      break-after: avoid !important;
     }
 
     .rpt .logo-box {
@@ -3755,7 +3773,7 @@
           </div>
         </div>
         
-        <div class="rpt anexo-landscape">
+        <div class="rpt anexo-landscape" style="overflow: hidden; max-height: 100vh;">
           <div class="logo-box"><img src="https://advantagemidia.com/wp-content/uploads/2026/01/WhatsApp-Image-2026-01-15-at-10.31.14.jpeg" alt="Logo" style="height: 80px; width: auto;"></div>
           <div class="title">ANEXO I - RELATÓRIO DETALHADO DE ABASTECIMENTOS</div>
           
@@ -3818,14 +3836,14 @@
             <strong>TOTAL DO CÓDIGO DO ITEM: ${fmtNum(totalLitros)} Litros | Valor Total: R$ ${fmtNum(totalValor)}</strong>
           </div>
 
-          <div style="margin-top: 24px; text-align: center;">
-            <div style="border-top: 1px solid #000; width: 300px; margin: 0 auto 8px auto;"></div>
+          <div style="margin-top: 60px; text-align: center;">
+            <div style="border-top: 1px solid #000; width: 350px; margin: 0 auto 8px auto;"></div>
             <strong>${escapeHtml(DB.fiscal.nome)}</strong><br>
             <span>FISCAL DE CONTRATO</span>
           </div>
 
-          <div style="margin-top: 32px; text-align: center;">
-            <div style="border-top: 1px solid #000; width: 300px; margin: 0 auto 8px auto;"></div>
+          <div style="margin-top: 90px; text-align: center; page-break-after: avoid !important; break-after: avoid !important;">
+            <div style="border-top: 1px solid #000; width: 350px; margin: 0 auto 8px auto;"></div>
             <strong>LUCIANO RODRIGUES</strong><br>
             <span>SECRETÁRIO MUNICIPAL DE ADMINISTRAÇÃO, GESTÃO DE PESSOAS E INOVAÇÃO</span>
           </div>
