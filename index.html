@@ -1141,18 +1141,22 @@
         console.log(`📝 Atualizando ${table} [id: ${id}]:`, data);
         const { data: result, error } = await supabaseClient.from(table).update(data).eq('id', id).select();
         if (error) {
-          console.error(`❌ ERRO DETALHADO:`, {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code
-          });
+          console.error(`❌❌❌ ERRO SUPABASE ❌❌❌`);
+          console.error(`MESSAGE: ${error.message || 'N/A'}`);
+          console.error(`DETAILS: ${error.details || 'N/A'}`);
+          console.error(`HINT: ${error.hint || 'N/A'}`);
+          console.error(`CODE: ${error.code || 'N/A'}`);
+          console.error(`❌❌❌ FIM DO ERRO ❌❌❌`);
           throw error;
         }
         console.log(`✅ Atualizado com sucesso em ${table}:`, result);
       } catch (error) {
         console.error(`❌ Erro ao atualizar ${table}:`, error);
-        console.error(`📋 ID:`, id, `Dados:`, data);
+        console.error(`📋 ID: ${id}`);
+        console.error(`📋 DADOS ENVIADOS:`);
+        for (const [key, value] of Object.entries(data)) {
+          console.error(`   ${key}: ${value}`);
+        }
       }
     }
 
