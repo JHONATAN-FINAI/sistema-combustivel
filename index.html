@@ -1140,7 +1140,15 @@
       try {
         console.log(`📝 Atualizando ${table} [id: ${id}]:`, data);
         const { data: result, error } = await supabaseClient.from(table).update(data).eq('id', id).select();
-        if (error) throw error;
+        if (error) {
+          console.error(`❌ ERRO DETALHADO:`, {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          throw error;
+        }
         console.log(`✅ Atualizado com sucesso em ${table}:`, result);
       } catch (error) {
         console.error(`❌ Erro ao atualizar ${table}:`, error);
