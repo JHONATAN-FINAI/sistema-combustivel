@@ -1,0 +1,4256 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sistema de Gestão de Combustível — AMTC</title>
+  
+  <!-- Bootstrap 5.3 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1e40af;
+      --primary-light: #3b82f6;
+      --secondary: #64748b;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --border: #e2e8f0;
+      --text-primary: #0f172a;
+      --text-secondary: #64748b;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --radius: 12px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      color: var(--text-primary);
+      background: var(--bg-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Layout Principal */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 1000;
+      transition: transform 0.3s ease;
+    }
+
+    .sidebar-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-brand {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sidebar-brand i {
+      width: 32px;
+      height: 32px;
+      stroke-width: 2.5;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 16px;
+    }
+
+    .nav-section {
+      margin-bottom: 24px;
+    }
+
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      padding: 0 12px 8px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+      margin-bottom: 4px;
+    }
+
+    .nav-link i {
+      width: 20px;
+      height: 20px;
+      stroke-width: 2;
+      flex-shrink: 0;
+    }
+
+    .nav-link:hover {
+      background: var(--bg-primary);
+      color: var(--primary);
+    }
+
+    .nav-link.active {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+    }
+
+    .nav-link.active:hover {
+      color: white;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: 280px;
+      min-height: 100vh;
+    }
+
+    .top-bar {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .top-bar-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .top-bar-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .content-area {
+      padding: 32px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* Cards */
+    .card-modern {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s;
+    }
+
+    .card-modern:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .card-header-modern {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0;
+      color: var(--text-primary);
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      border-radius: var(--radius);
+      padding: 24px;
+      color: white;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .stat-card.success {
+      background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+    }
+
+    .stat-card.warning {
+      background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+    }
+
+    .stat-card.danger {
+      background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .stat-icon i {
+      width: 24px;
+      height: 24px;
+      stroke-width: 2;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    /* Buttons */
+    .btn-modern {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-modern i {
+      width: 18px;
+      height: 18px;
+      stroke-width: 2;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-secondary {
+      background: var(--secondary);
+      color: white;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+
+    .btn-outline:hover {
+      background: var(--bg-primary);
+    }
+
+    /* Tables */
+    .table-modern {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .table-modern thead {
+      background: var(--bg-primary);
+    }
+
+    .table-modern th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      border-bottom: 2px solid var(--border);
+    }
+
+    .table-modern td {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .table-modern tbody tr {
+      transition: background 0.2s;
+    }
+
+    .table-modern tbody tr:hover {
+      background: var(--bg-primary);
+    }
+
+    /* Badges */
+    .badge-modern {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-primary {
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--primary);
+    }
+
+    .badge-success {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+    }
+
+    .badge-danger {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+    }
+
+    .badge-warning {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--warning);
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .form-control-modern {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      transition: all 0.2s;
+      background: var(--bg-secondary);
+    }
+
+    .form-control-modern:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .toolbar-left, .toolbar-right {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    /* Modal Overlay */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-secondary);
+      border-radius: var(--radius);
+      max-width: 600px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-footer {
+      padding: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    /* Toast Notifications */
+    .toast-container {
+      position: fixed;
+      top: 80px;
+      right: 32px;
+      z-index: 3000;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .toast {
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 300px;
+      border-left: 4px solid var(--primary);
+      animation: toastSlideIn 0.3s ease;
+    }
+
+    @keyframes toastSlideIn {
+      from {
+        opacity: 0;
+        transform: translateX(100%);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .toast.success {
+      border-left-color: var(--success);
+    }
+
+    .toast.danger {
+      border-left-color: var(--danger);
+    }
+
+    .toast.warning {
+      border-left-color: var(--warning);
+    }
+
+    .toast-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .toast-message {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* Loading State */
+    .loading-spinner {
+      border: 3px solid var(--border);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 40px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+    }
+
+    /* Utilities */
+    .text-primary { color: var(--primary) !important; }
+    .text-success { color: var(--success) !important; }
+    .text-danger { color: var(--danger) !important; }
+    .text-warning { color: var(--warning) !important; }
+    .text-secondary { color: var(--text-secondary) !important; }
+    .text-end { text-align: right !important; }
+    .hidden { display: none !important; }
+    .mb-0 { margin-bottom: 0 !important; }
+    .mt-3 { margin-top: 24px !important; }
+    .fw-bold { font-weight: 700 !important; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.mobile-open {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .content-area {
+        padding: 20px;
+      }
+
+      .top-bar {
+        padding: 16px 20px;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+
+      #printRoot {
+        display: block !important;
+      }
+
+      #printRoot * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      @page {
+        size: A4 portrait;
+        margin: 15mm 12mm 15mm 12mm;
+      }
+      
+      @media print {
+        /* Reduzir margens superiores e inferiores */
+        @page {
+          margin-top: 10mm;
+          margin-bottom: 10mm;
+          margin-left: 12mm;
+          margin-right: 12mm;
+        }
+        
+        body {
+          margin: 0;
+          padding: 0;
+        }
+        
+        /* Evitar quebras de página indesejadas */
+        .rpt {
+          page-break-after: auto;
+          orphans: 2;
+          widows: 2;
+        }
+        
+        /* Evitar espaços vazios */
+        * {
+          max-width: 100%;
+        }
+      }
+
+      /* Página landscape para anexo */
+      .anexo-landscape {
+        page-break-before: always;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+        break-after: avoid !important;
+        break-inside: avoid !important;
+        overflow: visible;
+        display: block;
+      }
+      
+      /* Forçar anexo a ser a última página */
+      .anexo-landscape * {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
+      
+      @page anexo {
+        size: A4 landscape;
+        margin: 8mm 8mm 8mm 8mm;
+      }
+      
+      .anexo-landscape {
+        page: anexo;
+      }
+
+      /* Ajuste para tabela de abastecimentos não estourar */
+      .rpt table.items {
+        font-size: 7px !important;
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+      }
+
+      .rpt table.items th,
+      .rpt table.items td {
+        padding: 2px 1px !important;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        font-size: 7px !important;
+        line-height: 1.2;
+        text-align: center;
+      }
+
+      /* Colunas com largura fixa otimizada para paisagem */
+      .rpt table.items th:nth-child(1),
+      .rpt table.items td:nth-child(1) { width: 40px !important; } /* Cód. Item */
+      .rpt table.items th:nth-child(2),
+      .rpt table.items td:nth-child(2) { width: 70px !important; } /* Produto */
+      .rpt table.items th:nth-child(3),
+      .rpt table.items td:nth-child(3) { width: 45px !important; } /* Qtde */
+      .rpt table.items th:nth-child(4),
+      .rpt table.items td:nth-child(4) { width: 55px !important; } /* Data */
+      .rpt table.items th:nth-child(5),
+      .rpt table.items td:nth-child(5) { width: 55px !important; } /* N° Doc */
+      .rpt table.items th:nth-child(6),
+      .rpt table.items td:nth-child(6) { width: 50px !important; } /* Placa */
+      .rpt table.items th:nth-child(7),
+      .rpt table.items td:nth-child(7) { width: 120px !important; } /* Veículo */
+      .rpt table.items th:nth-child(8),
+      .rpt table.items td:nth-child(8) { width: 45px !important; } /* Vlr Unit */
+      .rpt table.items th:nth-child(9),
+      .rpt table.items td:nth-child(9) { width: 50px !important; } /* Vlr Abast */
+      .rpt table.items th:nth-child(10),
+      .rpt table.items td:nth-child(10) { width: 35px !important; } /* Hora */
+      .rpt table.items th:nth-child(11),
+      .rpt table.items td:nth-child(11) { width: 40px !important; } /* Km */
+      .rpt table.items th:nth-child(12),
+      .rpt table.items td:nth-child(12) { width: auto !important; min-width: 80px; } /* Motorista */
+
+      /* Evitar quebra de tabela */
+      .rpt table.items,
+      .rpt table.items thead,
+      .rpt table.items tbody {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+
+      /* Garantir que cabeçalho da tabela repita se quebrar */
+      .rpt table.items thead {
+        display: table-header-group;
+      }
+
+      /* Reduzir espaçamento no anexo para caber mais linhas */
+      .anexo-landscape .title {
+        margin-bottom: 8px !important;
+        font-size: 13px !important;
+      }
+
+      .anexo-landscape .logo-box {
+        margin-bottom: 6px !important;
+      }
+
+
+      .rpt table.items th {
+        font-size: 7px;
+      }
+    }
+
+    #printRoot {
+      display: none;
+    }
+
+    /* Report Styles (mantido do original) */
+    .rpt {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      color: #000;
+      orphans: 2;
+      widows: 2;
+    }
+    
+    /* Evitar quebra de página após último elemento */
+    .rpt:last-child,
+    .rpt > *:last-child {
+      page-break-after: avoid !important;
+      break-after: avoid !important;
+    }
+
+    .rpt .logo-box {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .rpt .logo-box img {
+      height: 80px;
+      width: auto;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .rpt .title {
+      text-align: center;
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .rpt .box {
+      border: 1px solid #000;
+      padding: 6px;
+      margin-bottom: 6px;
+    }
+
+    .rpt .box-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .rpt .kv {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .rpt .kv td {
+      padding: 2px 4px;
+    }
+
+    .rpt .kv .k {
+      font-weight: 700;
+      width: 240px;
+    }
+
+    .rpt .items {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      margin-top: 8px;
+    }
+
+    .rpt .items th,
+    .rpt .items td {
+      border: 1px solid #000;
+      padding: 4px 6px;
+      text-align: left;
+    }
+
+    .rpt .items th {
+      background: #f0f0f0;
+      font-weight: 700;
+    }
+
+    .rpt .items .text-end {
+      text-align: right;
+    }
+
+    .rpt .section-title {
+      font-weight: 700;
+      margin: 12px 0 6px 0;
+      text-transform: uppercase;
+      font-size: 13px;
+    }
+  </style>
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="app-container no-print">
+    <!-- Sidebar -->
+    <aside class="sidebar no-print" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand">
+          <i data-lucide="fuel"></i>
+          <span>Gestão Combustível</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a href="#/dashboard" class="nav-link">
+            <i data-lucide="layout-dashboard"></i>
+            Dashboard
+          </a>
+          <a href="#/notas" class="nav-link">
+            <i data-lucide="file-text"></i>
+            Notas Fiscais
+          </a>
+          <a href="#/historico" class="nav-link">
+            <i data-lucide="clock"></i>
+            Histórico
+          </a>
+          <a href="#/relatorios" class="nav-link">
+            <i data-lucide="bar-chart-2"></i>
+            Relatórios
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Cadastros</div>
+          <a href="#/fornecedores" class="nav-link">
+            <i data-lucide="building-2"></i>
+            Fornecedores
+          </a>
+          <a href="#/contratos" class="nav-link">
+            <i data-lucide="file-signature"></i>
+            Contratos
+          </a>
+          <a href="#/atas" class="nav-link">
+            <i data-lucide="file-check"></i>
+            Atas de Preços
+          </a>
+          <a href="#/documentos" class="nav-link">
+            <i data-lucide="folder"></i>
+            Empenhos & AFTs
+          </a>
+          <a href="#/motoristas" class="nav-link">
+            <i data-lucide="users"></i>
+            Motoristas
+          </a>
+          <a href="#/veiculos" class="nav-link">
+            <i data-lucide="car"></i>
+            Veículos
+          </a>
+          <a href="#/fiscal" class="nav-link">
+            <i data-lucide="user-check"></i>
+            Fiscal
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Sistema</div>
+          <a href="#/importexport" class="nav-link">
+            <i data-lucide="database"></i>
+            Backup/Restaurar
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="top-bar no-print">
+        <h1 class="top-bar-title" id="pageTitle">Dashboard</h1>
+        <div class="top-bar-actions">
+          <button class="btn-modern btn-outline" id="btnMobileMenu" style="display: none;">
+            <i data-lucide="menu"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="content-area" id="view">
+        <!-- Dynamic content will be rendered here -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Print Area -->
+  <div id="printRoot"></div>
+
+  <script>
+    /*********************
+     * CONSTANTS & ENUMS
+     *********************/
+    const DOC_TIPO = { EMP: "EMP", AFT: "AFT" };
+    const COMB = { GASOLINA: "GASOLINA", DIESEL: "DIESEL", ETANOL: "ETANOL" };
+    const COMB_LABEL = {
+      GASOLINA: "Gasolina Comum",
+      DIESEL: "Óleo Diesel",
+      ETANOL: "Etanol Hidratado"
+    };
+    const COMB_CODIGO = {
+      GASOLINA: "2330",
+      DIESEL: "2332",
+      ETANOL: "2331"
+    };
+
+    /*********************
+     * SUPABASE CONFIG
+     *********************/
+    const SUPABASE_URL = 'https://skkrnrdyketlelnjvhts.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNra3JucmR5a2V0bGVsbmp2aHRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4Mzc3MTksImV4cCI6MjA4NjQxMzcxOX0.hmolSB4F6MZCD-TgdXXwsnB3HAkD8y1S27qsT0UjYeA';
+    
+    let supabaseClient = null;
+    let useSupabase = false;
+
+    function initSupabase() {
+      // Inicializar Supabase se credenciais foram fornecidas
+      console.log('   🔑 SUPABASE_URL:', SUPABASE_URL ? 'Configurado' : 'Vazio');
+      console.log('   🔑 SUPABASE_KEY:', SUPABASE_KEY ? 'Configurado' : 'Vazio');
+      
+      if (SUPABASE_URL && SUPABASE_KEY) {
+        try {
+          if (typeof supabase === 'undefined') {
+            console.error('   ❌ Biblioteca Supabase não carregada');
+            console.error('   💡 Verifique se o script do Supabase está carregando');
+            return false;
+          }
+          console.log('   ✓ Biblioteca Supabase detectada');
+          const { createClient } = supabase;
+          supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+          useSupabase = true;
+          console.log('   ✅ Supabase conectado com sucesso!');
+          console.log('   📡 Todos os cadastros serão sincronizados com o banco');
+          return true;
+        } catch (error) {
+          console.error('   ❌ Erro ao conectar Supabase:', error);
+          return false;
+        }
+      } else {
+        console.warn('   ⚠️ Supabase NÃO configurado. Usando apenas LocalStorage.');
+        console.warn('   💾 ATENÇÃO: Cadastros NÃO serão salvos no banco!');
+        return false;
+      }
+    }
+
+    /*********************
+     * UTILITY FUNCTIONS
+     *********************/
+    const qs = (selector, parent = document) => parent.querySelector(selector);
+    const qsa = (selector, parent = document) => Array.from(parent.querySelectorAll(selector));
+    const el = (html) => {
+      const t = document.createElement("template");
+      t.innerHTML = html.trim();
+      return t.content.firstChild;
+    };
+
+    function uuid() {
+      return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === "x" ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      });
+    }
+
+    function findById(arr, id) {
+      return arr.find((x) => x.id === id);
+    }
+
+    function isoToBR(iso) {
+      if (!iso) return "";
+      const [y, m, d] = iso.split("-");
+      return `${d}/${m}/${y}`;
+    }
+
+    function brToIso(br) {
+      if (!br) return "";
+      const [d, m, y] = br.split("/");
+      return `${y}-${m}-${d}`;
+    }
+
+    function fmtNum(val) {
+      if (val == null) return "0,00";
+      return Number(val).toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function fmtLitros(val) {
+      if (val == null) return "0,000";
+      return Number(val).toLocaleString("pt-BR", {
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3
+      });
+    }
+
+    function fmtBRL(val) {
+      if (val == null) return "R$ 0,00";
+      return "R$ " + fmtNum(val);
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    /*********************
+     * TOAST NOTIFICATIONS
+     *********************/
+    function showToast(message, type = "primary") {
+      const container = qs("#toastContainer");
+      const iconMap = {
+        success: "check-circle",
+        danger: "alert-circle",
+        warning: "alert-triangle",
+        primary: "info"
+      };
+
+      const toast = el(`
+        <div class="toast ${type}">
+          <i class="toast-icon" data-lucide="${iconMap[type] || 'info'}"></i>
+          <div class="toast-message">${escapeHtml(message)}</div>
+        </div>
+      `);
+
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateX(100%)";
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    /*********************
+     * DATABASE (LocalStorage)
+     *********************/
+    const DB = {
+      fornecedores: [],
+      contratos: [],
+      atas: [],
+      documentos: [],
+      motoristas: [],
+      veiculos: [],
+      notas: [],
+      itens: [],
+      fiscal: {
+        nome: 'JHONATAN FERNANDES GOMES',
+        cargo: 'SUPERINTENDENTE DE CONTROLE DE FROTA E COMBUSTÍVEL',
+        lotacao: 'SECRETARIA DE ADMINISTRAÇÃO',
+        telefone: '(66) 99625-3604',
+        portaria: '20/2025',
+        portaria_diorondon: '5895 de 24/02/2025'
+      }
+    };
+
+    function saveDB() {
+      localStorage.setItem("COMBUSTIVEL_DB", JSON.stringify(DB));
+    }
+
+    /*********************
+     * SUPABASE SYNC
+     *********************/
+    async function supabaseInsert(table, data) {
+      if (!useSupabase) {
+        console.warn(`⚠️ Supabase desativado. Dados NÃO foram salvos em ${table}:`, data);
+        return;
+      }
+      try {
+        console.log(`💾 Inserindo em ${table}:`, data);
+        const { data: result, error } = await supabaseClient.from(table).insert(data).select();
+        if (error) throw error;
+        console.log(`✅ Inserido com sucesso em ${table}:`, result);
+      } catch (error) {
+        console.error(`❌ Erro ao inserir em ${table}:`, error);
+        console.error(`📋 Dados que tentaram ser inseridos:`, data);
+      }
+    }
+
+    async function supabaseUpdate(table, id, data) {
+      if (!useSupabase) {
+        console.warn(`⚠️ Supabase desativado. Atualização NÃO foi salva em ${table}:`, data);
+        return;
+      }
+      try {
+        console.log(`📝 Atualizando ${table} [id: ${id}]:`, data);
+        const { data: result, error } = await supabaseClient.from(table).update(data).eq('id', id).select();
+        if (error) {
+          console.error(`❌❌❌ ERRO SUPABASE ❌❌❌`);
+          console.error(`MESSAGE: ${error.message || 'N/A'}`);
+          console.error(`DETAILS: ${error.details || 'N/A'}`);
+          console.error(`HINT: ${error.hint || 'N/A'}`);
+          console.error(`CODE: ${error.code || 'N/A'}`);
+          console.error(`❌❌❌ FIM DO ERRO ❌❌❌`);
+          throw error;
+        }
+        console.log(`✅ Atualizado com sucesso em ${table}:`, result);
+      } catch (error) {
+        console.error(`❌ Erro ao atualizar ${table}:`, error);
+        console.error(`📋 ID: ${id}`);
+        console.error(`📋 DADOS ENVIADOS:`);
+        for (const [key, value] of Object.entries(data)) {
+          console.error(`   ${key}: ${value}`);
+        }
+      }
+    }
+
+    async function supabaseDelete(table, id) {
+      if (!useSupabase) {
+        console.warn(`⚠️ Supabase desativado. Exclusão NÃO foi executada em ${table} [id: ${id}]`);
+        return;
+      }
+      try {
+        console.log(`🗑️ Deletando de ${table} [id: ${id}]`);
+        const { error } = await supabaseClient.from(table).delete().eq('id', id);
+        if (error) throw error;
+        console.log(`✅ Deletado com sucesso de ${table} [id: ${id}]`);
+      } catch (error) {
+        console.error(`❌ Erro ao deletar de ${table}:`, error);
+        console.error(`📋 ID tentado deletar:`, id);
+      }
+    }
+
+    async function supabaseUpdateFiscal(data) {
+      if (!useSupabase) return;
+      try {
+        const { data: fisc } = await supabaseClient.from('fiscal').select('id').limit(1).single();
+        if (fisc) {
+          const { error } = await supabaseClient.from('fiscal').update(data).eq('id', fisc.id);
+          if (error) throw error;
+        }
+      } catch (error) {
+        console.error('Erro ao atualizar fiscal:', error);
+      }
+    }
+
+    async function loadDB() {
+      // Tentar carregar do Supabase primeiro
+      if (useSupabase && supabaseClient) {
+        try {
+          console.log('Carregando dados do Supabase...');
+          
+          const [forn, contr, at, doc, mot, veic, not, it, fisc] = await Promise.all([
+            supabaseClient.from('fornecedores').select('*').order('created_at', { ascending: false }),
+            supabaseClient.from('contratos').select('*').order('created_at', { ascending: false }),
+            supabaseClient.from('atas').select('*').order('created_at', { ascending: false }),
+            supabaseClient.from('documentos').select('*').order('created_at', { ascending: false }),
+            supabaseClient.from('motoristas').select('*').order('nome'),
+            supabaseClient.from('veiculos').select('*').order('placa'),
+            supabaseClient.from('notas').select('*').order('created_at', { ascending: false }),
+            supabaseClient.from('itens').select('*').order('created_at', { ascending: false }),
+            supabaseClient.from('fiscal').select('*').limit(1)
+          ]);
+
+          // Verificar erros
+          if (forn.error) throw new Error(`Erro ao carregar fornecedores: ${forn.error.message}`);
+          if (contr.error) throw new Error(`Erro ao carregar contratos: ${contr.error.message}`);
+          if (at.error) throw new Error(`Erro ao carregar atas: ${at.error.message}`);
+          if (doc.error) throw new Error(`Erro ao carregar documentos: ${doc.error.message}`);
+          if (mot.error) throw new Error(`Erro ao carregar motoristas: ${mot.error.message}`);
+          if (veic.error) throw new Error(`Erro ao carregar veículos: ${veic.error.message}`);
+          if (not.error) throw new Error(`Erro ao carregar notas: ${not.error.message}`);
+          if (it.error) throw new Error(`Erro ao carregar itens: ${it.error.message}`);
+          if (fisc.error) throw new Error(`Erro ao carregar fiscal: ${fisc.error.message}`);
+
+          DB.fornecedores = forn.data || [];
+          DB.contratos = contr.data || [];
+          DB.atas = at.data || [];
+          DB.documentos = doc.data || [];
+          DB.motoristas = mot.data || [];
+          DB.veiculos = veic.data || [];
+          DB.notas = not.data || [];
+          DB.itens = it.data || [];
+          
+          // Fiscal pode estar vazio (array) ou ter um registro
+          if (fisc.data && fisc.data.length > 0) {
+            DB.fiscal = fisc.data[0];
+          }
+
+          console.log('✓ Dados carregados do Supabase');
+          console.log(`  Fornecedores: ${DB.fornecedores.length}`);
+          console.log(`  Contratos: ${DB.contratos.length}`);
+          console.log(`  Atas: ${DB.atas.length}`);
+          console.log(`  Documentos: ${DB.documentos.length}`);
+          console.log(`  Motoristas: ${DB.motoristas.length}`);
+          console.log(`  Veículos: ${DB.veiculos.length}`);
+          console.log(`  Notas: ${DB.notas.length}`);
+          console.log(`  Itens: ${DB.itens.length}`);
+          
+          // Salvar no LocalStorage como backup
+          localStorage.setItem("COMBUSTIVEL_DB", JSON.stringify(DB));
+          return;
+        } catch (error) {
+          console.error('❌ Erro ao carregar do Supabase:', error);
+          console.warn('⚠ Usando LocalStorage como fallback...');
+          alert('Erro ao conectar com banco online. Usando dados locais.\n\nVerifique:\n1. Schema SQL foi executado?\n2. Conexão com internet OK?\n3. Credenciais corretas?');
+        }
+      } else {
+        console.warn('⚠ Supabase desativado. Usando LocalStorage.');
+      }
+
+      // Fallback: LocalStorage
+      const raw = localStorage.getItem("COMBUSTIVEL_DB");
+      if (raw) {
+        Object.assign(DB, JSON.parse(raw));
+      }
+    }
+
+    /*********************
+     * ROUTING
+     *********************/
+    async function renderRoute() {
+      const hash = location.hash || "#/dashboard";
+      const route = hash.substring(2);
+      
+      console.log(`📍 Renderizando rota: ${route}`);
+
+      // Update active nav link
+      qsa(".nav-link").forEach(link => {
+        link.classList.toggle("active", link.getAttribute("href") === hash);
+      });
+
+      // Update page title
+      const titleMap = {
+        dashboard: "Dashboard",
+        notas: "Notas Fiscais",
+        historico: "Histórico de Abastecimentos",
+        relatorios: "Relatórios",
+        fornecedores: "Fornecedores",
+        contratos: "Contratos",
+        atas: "Atas de Registro de Preços",
+        documentos: "Empenhos & AFTs",
+        motoristas: "Motoristas",
+        veiculos: "Veículos",
+        fiscal: "Fiscal de Contrato",
+        importexport: "Backup & Restaurar"
+      };
+      qs("#pageTitle").textContent = titleMap[route] || "Sistema";
+
+      // Render based on route
+      const routeHandlers = {
+        dashboard: renderDashboard,
+        fornecedores: renderFornecedores,
+        contratos: renderContratos,
+        atas: renderAtas,
+        documentos: renderDocumentos,
+        motoristas: renderMotoristas,
+        veiculos: renderVeiculos,
+        fiscal: renderFiscal,
+        notas: renderNotas,
+        historico: renderHistorico,
+        relatorios: renderRelatorios,
+        importexport: renderImportExport
+      };
+
+      const handler = routeHandlers[route] || renderDashboard;
+      await handler();
+
+      // Refresh Lucide icons (com verificação)
+      if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        lucide.createIcons();
+      } else {
+        console.warn('Lucide não carregado ainda');
+        setTimeout(() => {
+          if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            lucide.createIcons();
+          }
+        }, 100);
+      }
+    }
+
+    window.addEventListener("hashchange", async () => {
+      console.log('Hash changed to:', location.hash);
+      await renderRoute();
+    });
+
+    /*********************
+     * DASHBOARD
+     *********************/
+    async function renderDashboard() {
+      const view = qs("#view");
+      
+      // Calcular estatísticas
+      const totalNotas = DB.notas.filter(n => n.finalizada_em).length;
+      const totalAbastecimentos = DB.itens.length;
+      const totalLitros = DB.itens.reduce((sum, it) => sum + (it.qtd_litros || 0), 0);
+      const totalValor = DB.itens.reduce((sum, it) => sum + ((it.qtd_litros || 0) * (it.valor_unitario || 0)), 0);
+      
+      view.innerHTML = `
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i data-lucide="file-text"></i>
+            </div>
+            <div class="stat-value">${totalNotas}</div>
+            <div class="stat-label">Notas Fiscais</div>
+          </div>
+
+          <div class="stat-card success">
+            <div class="stat-icon">
+              <i data-lucide="fuel"></i>
+            </div>
+            <div class="stat-value">${totalAbastecimentos}</div>
+            <div class="stat-label">Abastecimentos</div>
+          </div>
+
+          <div class="stat-card warning">
+            <div class="stat-icon">
+              <i data-lucide="droplet"></i>
+            </div>
+            <div class="stat-value">${fmtLitros(totalLitros)}</div>
+            <div class="stat-label">Litros Totais</div>
+          </div>
+
+          <div class="stat-card danger">
+            <div class="stat-icon">
+              <i data-lucide="dollar-sign"></i>
+            </div>
+            <div class="stat-value">${fmtBRL(totalValor)}</div>
+            <div class="stat-label">Valor Total</div>
+          </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+          <div class="col-12">
+            <div class="card-modern">
+              <div class="card-header-modern" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 class="card-title" style="margin: 0;">
+                  <i data-lucide="alert-circle" style="width: 20px; height: 20px; margin-right: 8px;"></i>
+                  Monitoramento de Empenhos
+                </h3>
+                <span class="badge-modern badge-warning" id="empenhosCriticos" style="display: none;">
+                  <i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i>
+                  Empenhos Críticos
+                </span>
+              </div>
+              <div id="listaEmpenhos"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="card-modern">
+              <div class="card-header-modern">
+                <h3 class="card-title">Consumo por Combustível</h3>
+              </div>
+              <canvas id="chartCombustivel" height="250"></canvas>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card-modern">
+              <div class="card-header-modern">
+                <h3 class="card-title">Últimas Notas Fiscais</h3>
+              </div>
+              <div class="table-responsive">
+                <table class="table-modern">
+                  <thead>
+                    <tr>
+                      <th>NF</th>
+                      <th>Combustível</th>
+                      <th class="text-end">Valor</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${DB.notas.slice(-5).reverse().map(n => `
+                      <tr>
+                        <td><strong>${escapeHtml(n.numero_nf)}</strong></td>
+                        <td>${COMB_LABEL[n.combustivel]}</td>
+                        <td class="text-end">${fmtBRL(n.valor_total)}</td>
+                        <td>
+                          <span class="badge-modern ${n.finalizada_em ? 'badge-success' : 'badge-warning'}">
+                            ${n.finalizada_em ? 'Finalizada' : 'Em andamento'}
+                          </span>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Calcular e renderizar empenhos
+      const empenhos = DB.documentos.filter(d => d.tipo_documento === DOC_TIPO.EMP);
+      let empenhosComAlerta = 0;
+      
+      const empenhosHtml = empenhos.map(emp => {
+        const saldoInicial = emp.saldo_atual || 0;
+        
+        // Calcular valor consumido (soma dos itens das notas vinculadas a este empenho)
+        const notasDoEmpenho = DB.notas.filter(n => n.empenho_id === emp.id);
+        let valorConsumido = 0;
+        
+        notasDoEmpenho.forEach(nota => {
+          const itensNota = DB.itens.filter(it => it.nota_fiscal_id === nota.id);
+          itensNota.forEach(item => {
+            valorConsumido += (item.qtd_litros || 0) * (item.valor_unitario || 0);
+          });
+        });
+        
+        const saldoRestante = saldoInicial - valorConsumido;
+        const percentualConsumido = saldoInicial > 0 ? (valorConsumido / saldoInicial) * 100 : 0;
+        
+        // Determinar status
+        let statusClass = 'success';
+        let statusIcon = 'check-circle';
+        let statusText = 'Normal';
+        let alertaHtml = '';
+        
+        if (percentualConsumido >= 90) {
+          statusClass = 'danger';
+          statusIcon = 'alert-octagon';
+          statusText = 'Crítico';
+          empenhosComAlerta++;
+          alertaHtml = `
+            <div style="margin-top: 8px; padding: 8px; background: #fee2e2; border-left: 3px solid #dc2626; border-radius: 4px; font-size: 13px;">
+              <strong>⚠️ EMPENHO CRÍTICO (${fmtNum(percentualConsumido, 1)}%):</strong><br>
+              Providenciar URGENTEMENTE novo empenho. Saldo insuficiente para continuar abastecimentos.
+            </div>
+          `;
+        } else if (percentualConsumido >= 70) {
+          statusClass = 'warning';
+          statusIcon = 'alert-triangle';
+          statusText = 'Atenção';
+          empenhosComAlerta++;
+          alertaHtml = `
+            <div style="margin-top: 8px; padding: 8px; background: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 4px; font-size: 13px;">
+              <strong>⚠️ ALERTA (${fmtNum(percentualConsumido, 1)}%):</strong><br>
+              Providenciar novo empenho. Este empenho está próximo do limite.
+            </div>
+          `;
+        }
+        
+        return `
+          <div style="padding: 16px; border-bottom: 1px solid #e5e7eb;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+              <div>
+                <div style="font-weight: 600; font-size: 15px; margin-bottom: 4px;">
+                  Empenho ${escapeHtml(emp.numero)}
+                </div>
+                <div style="color: #64748b; font-size: 13px;">
+                  ${COMB_LABEL[emp.combustivel]} | Pré-empenho: ${escapeHtml(emp.pre_empenho || '-')}
+                </div>
+              </div>
+              <span class="badge-modern badge-${statusClass}">
+                <i data-lucide="${statusIcon}" style="width: 14px; height: 14px;"></i>
+                ${statusText}
+              </span>
+            </div>
+            
+            <div style="margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+                <span>Saldo Inicial:</span>
+                <strong>${fmtBRL(saldoInicial)}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+                <span>Valor Consumido:</span>
+                <strong style="color: #dc2626;">${fmtBRL(valorConsumido)}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 14px; margin-top: 8px;">
+                <span><strong>Saldo Restante:</strong></span>
+                <strong style="color: ${saldoRestante < saldoInicial * 0.3 ? '#dc2626' : '#059669'};">
+                  ${fmtBRL(saldoRestante)}
+                </strong>
+              </div>
+            </div>
+            
+            <div style="background: #e5e7eb; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 12px;">
+              <div style="background: ${percentualConsumido >= 90 ? '#dc2626' : percentualConsumido >= 70 ? '#f59e0b' : '#059669'}; height: 100%; width: ${Math.min(percentualConsumido, 100)}%; transition: width 0.3s ease;"></div>
+            </div>
+            <div style="text-align: right; font-size: 12px; color: #64748b; margin-top: 4px;">
+              ${fmtNum(percentualConsumido, 1)}% consumido
+            </div>
+            
+            ${alertaHtml}
+          </div>
+        `;
+      }).join('');
+      
+      const listaEmpenhos = qs('#listaEmpenhos');
+      if (listaEmpenhos) {
+        if (empenhos.length === 0) {
+          listaEmpenhos.innerHTML = `
+            <div style="padding: 32px; text-align: center; color: #64748b;">
+              <i data-lucide="inbox" style="width: 48px; height: 48px; margin-bottom: 12px;"></i>
+              <div>Nenhum empenho cadastrado</div>
+            </div>
+          `;
+        } else {
+          listaEmpenhos.innerHTML = empenhosHtml;
+        }
+      }
+      
+      // Mostrar badge de empenhos críticos se houver
+      const badgeCriticos = qs('#empenhosCriticos');
+      if (badgeCriticos && empenhosComAlerta > 0) {
+        badgeCriticos.style.display = 'inline-flex';
+        badgeCriticos.innerHTML = `
+          <i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i>
+          ${empenhosComAlerta} Empenho${empenhosComAlerta > 1 ? 's' : ''} em Alerta
+        `;
+      }
+      
+      lucide.createIcons();
+
+      // Sistema de notificação de empenhos críticos
+      if (empenhosComAlerta > 0) {
+        const empenhosCriticos = empenhos.filter(emp => {
+          const saldoInicial = emp.saldo_atual || 0;
+          const notasDoEmpenho = DB.notas.filter(n => n.empenho_id === emp.id);
+          let valorConsumido = 0;
+          notasDoEmpenho.forEach(nota => {
+            const itensNota = DB.itens.filter(it => it.nota_fiscal_id === nota.id);
+            itensNota.forEach(item => {
+              valorConsumido += (item.qtd_litros || 0) * (item.valor_unitario || 0);
+            });
+          });
+          const percentualConsumido = saldoInicial > 0 ? (valorConsumido / saldoInicial) * 100 : 0;
+          return percentualConsumido >= 70;
+        });
+        
+        const listaEmpenhosCriticos = empenhosCriticos.map(emp => {
+          const saldoInicial = emp.saldo_atual || 0;
+          const notasDoEmpenho = DB.notas.filter(n => n.empenho_id === emp.id);
+          let valorConsumido = 0;
+          notasDoEmpenho.forEach(nota => {
+            const itensNota = DB.itens.filter(it => it.nota_fiscal_id === nota.id);
+            itensNota.forEach(item => {
+              valorConsumido += (item.qtd_litros || 0) * (item.valor_unitario || 0);
+            });
+          });
+          const percentualConsumido = saldoInicial > 0 ? (valorConsumido / saldoInicial) * 100 : 0;
+          const saldoRestante = saldoInicial - valorConsumido;
+          
+          return `
+            <div style="padding: 12px; background: ${percentualConsumido >= 90 ? '#fee2e2' : '#fef3c7'}; border-radius: 8px; margin-bottom: 8px;">
+              <div style="font-weight: 600; margin-bottom: 4px;">
+                ${percentualConsumido >= 90 ? '🔴' : '⚠️'} Empenho ${escapeHtml(emp.numero)}
+              </div>
+              <div style="font-size: 13px; color: #64748b;">
+                ${COMB_LABEL[emp.combustivel]} | ${fmtNum(percentualConsumido, 1)}% consumido
+              </div>
+              <div style="font-size: 13px; margin-top: 4px;">
+                <strong>Saldo:</strong> ${fmtBRL(saldoRestante)} de ${fmtBRL(saldoInicial)}
+              </div>
+            </div>
+          `;
+        }).join('');
+        
+        // Criar notificação flutuante
+        setTimeout(() => {
+          const notificacao = el(`
+            <div style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px; background: white; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); border: 2px solid #f59e0b; animation: slideIn 0.3s ease;">
+              <div style="padding: 20px; border-bottom: 1px solid #e5e7eb;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                  <div style="width: 40px; height: 40px; background: #fef3c7; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="alert-triangle" style="width: 24px; height: 24px; color: #f59e0b;"></i>
+                  </div>
+                  <div style="flex: 1;">
+                    <div style="font-weight: 700; font-size: 16px;">Alerta de Empenhos</div>
+                    <div style="font-size: 13px; color: #64748b;">${empenhosComAlerta} empenho${empenhosComAlerta > 1 ? 's necessitam' : ' necessita'} atenção</div>
+                  </div>
+                  <button onclick="this.closest('div[style*=fixed]').remove()" style="border: none; background: none; cursor: pointer; padding: 4px;">
+                    <i data-lucide="x" style="width: 20px; height: 20px; color: #64748b;"></i>
+                  </button>
+                </div>
+              </div>
+              <div style="padding: 16px; max-height: 300px; overflow-y: auto;">
+                ${listaEmpenhosCriticos}
+                <div style="margin-top: 12px; padding: 12px; background: #f8fafc; border-radius: 8px; font-size: 13px;">
+                  <strong>Ação Requerida:</strong> Providenciar novos empenhos para garantir continuidade dos abastecimentos.
+                </div>
+              </div>
+            </div>
+          `);
+          
+          document.body.appendChild(notificacao);
+          lucide.createIcons();
+          
+          // Auto-fechar após 10 segundos
+          setTimeout(() => {
+            if (notificacao.parentNode) {
+              notificacao.style.animation = 'slideOut 0.3s ease';
+              setTimeout(() => notificacao.remove(), 300);
+            }
+          }, 10000);
+        }, 500);
+      }
+
+      // Render chart
+      const ctx = qs("#chartCombustivel");
+      if (ctx) {
+        const porComb = {};
+        DB.itens.forEach(it => {
+          porComb[it.produto] = (porComb[it.produto] || 0) + (it.qtd_litros || 0);
+        });
+
+        new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: Object.keys(porComb).map(k => COMB_LABEL[k] || k),
+            datasets: [{
+              data: Object.values(porComb),
+              backgroundColor: [
+                'rgba(37, 99, 235, 0.8)',
+                'rgba(16, 185, 129, 0.8)',
+                'rgba(245, 158, 11, 0.8)'
+              ],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom'
+              }
+            }
+          }
+        });
+      }
+    }
+
+    /*********************
+     * FORNECEDORES
+     *********************/
+    async function renderFornecedores() {
+      const view = qs("#view");
+      view.innerHTML = `
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <button class="btn-modern btn-primary" id="btnNovoFornecedor">
+              <i data-lucide="plus"></i>
+              Novo Fornecedor
+            </button>
+          </div>
+          <div class="toolbar-right">
+            <span class="badge-modern badge-primary">
+              <i data-lucide="building-2"></i>
+              ${DB.fornecedores.length} fornecedores
+            </span>
+          </div>
+        </div>
+
+        <div class="card-modern">
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>Razão Social</th>
+                  <th>CNPJ</th>
+                  <th>Contato</th>
+                  <th class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${DB.fornecedores.map(f => `
+                  <tr>
+                    <td><strong>${escapeHtml(f.razao_social)}</strong></td>
+                    <td>${escapeHtml(f.cnpj)}</td>
+                    <td>${escapeHtml(f.telefone || '-')}</td>
+                    <td class="text-end">
+                      <button class="btn-modern btn-outline btn-sm" onclick="editFornecedor('${f.id}')">
+                        <i data-lucide="edit-2"></i>
+                      </button>
+                      <button class="btn-modern btn-danger btn-sm" onclick="deleteFornecedor('${f.id}')">
+                        <i data-lucide="trash-2"></i>
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      qs("#btnNovoFornecedor").onclick = () => showFornecedorModal();
+    }
+
+    function showFornecedorModal(id = null) {
+      const fornecedor = id ? findById(DB.fornecedores, id) : {};
+      const isEdit = !!id;
+
+      const modal = el(`
+        <div class="modal-overlay active">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title">${isEdit ? 'Editar' : 'Novo'} Fornecedor</h3>
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="formFornecedor">
+                <div class="form-group">
+                  <label class="form-label">Razão Social *</label>
+                  <input type="text" class="form-control-modern" name="razao_social" value="${escapeHtml(fornecedor.razao_social || '')}" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">CNPJ *</label>
+                  <input type="text" class="form-control-modern" name="cnpj" value="${escapeHtml(fornecedor.cnpj || '')}" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Telefone</label>
+                  <input type="text" class="form-control-modern" name="telefone" value="${escapeHtml(fornecedor.telefone || '')}">
+                </div>
+                <div class="form-group mb-0">
+                  <label class="form-label">Endereço</label>
+                  <textarea class="form-control-modern" name="endereco" rows="3">${escapeHtml(fornecedor.endereco || '')}</textarea>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                Cancelar
+              </button>
+              <button class="btn-modern btn-primary" id="btnSaveFornecedor">
+                <i data-lucide="save"></i>
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      `);
+
+      document.body.appendChild(modal);
+      lucide.createIcons();
+
+      qs("#btnSaveFornecedor", modal).onclick = async () => {
+        const form = qs("#formFornecedor", modal);
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        const data = new FormData(form);
+        const obj = Object.fromEntries(data.entries());
+        
+        // Filtrar apenas campos que existem no Supabase
+        const supabaseFields = {
+          razao_social: obj.razao_social,
+          cnpj: obj.cnpj
+        };
+
+        if (isEdit) {
+          Object.assign(fornecedor, obj);
+          await supabaseUpdate('fornecedores', fornecedor.id, supabaseFields);
+        } else {
+          const newFornecedor = { id: uuid(), ...obj };
+          DB.fornecedores.push(newFornecedor);
+          await supabaseInsert('fornecedores', { id: newFornecedor.id, ...supabaseFields });
+        }
+
+        saveDB();
+        modal.remove();
+        await renderRoute();
+        showToast(`Fornecedor ${isEdit ? 'atualizado' : 'criado'} com sucesso!`, 'success');
+      };
+    }
+
+    window.editFornecedor = (id) => showFornecedorModal(id);
+    window.deleteFornecedor = async (id) => {
+      if (!confirm('Deseja realmente excluir este fornecedor?')) return;
+      DB.fornecedores = DB.fornecedores.filter(f => f.id !== id);
+      await supabaseDelete('fornecedores', id);
+      saveDB();
+      await renderRoute();
+      showToast('Fornecedor excluído com sucesso!', 'success');
+    };
+
+    /*********************
+     * CONTRATOS (Simplified)
+     *********************/
+    async function renderContratos() {
+      const view = qs("#view");
+      view.innerHTML = `
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <button class="btn-modern btn-primary" id="btnNovoContrato">
+              <i data-lucide="plus"></i>
+              Novo Contrato
+            </button>
+          </div>
+          <div class="toolbar-right">
+            <span class="badge-modern badge-primary">
+              <i data-lucide="file-signature"></i>
+              ${DB.contratos.length} contratos
+            </span>
+          </div>
+        </div>
+
+        <div class="card-modern">
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>Número</th>
+                  <th>Fornecedor</th>
+                  <th>Objeto</th>
+                  <th class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${DB.contratos.map(c => {
+                  const fornecedor = findById(DB.fornecedores, c.fornecedor_id);
+                  return `
+                    <tr>
+                      <td><strong>${escapeHtml(c.numero)}</strong></td>
+                      <td>${escapeHtml(fornecedor?.razao_social || '-')}</td>
+                      <td>${escapeHtml(c.objeto)}</td>
+                      <td class="text-end">
+                        <button class="btn-modern btn-outline btn-sm" onclick="editContrato('${c.id}')">
+                          <i data-lucide="edit-2"></i>
+                        </button>
+                        <button class="btn-modern btn-danger btn-sm" onclick="deleteContrato('${c.id}')">
+                          <i data-lucide="trash-2"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      qs("#btnNovoContrato").onclick = () => showContratoModal();
+    }
+
+    function showContratoModal(id = null) {
+      const contrato = id ? findById(DB.contratos, id) : {};
+      const isEdit = !!id;
+
+      const modal = el(`
+        <div class="modal-overlay active">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title">${isEdit ? 'Editar' : 'Novo'} Contrato</h3>
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="formContrato">
+                <div class="form-group">
+                  <label class="form-label">Número do Contrato *</label>
+                  <input type="text" class="form-control-modern" name="numero" value="${escapeHtml(contrato.numero || '')}" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Fornecedor *</label>
+                  <select class="form-control-modern" name="fornecedor_id" required>
+                    <option value="">Selecione...</option>
+                    ${DB.fornecedores.map(f => `
+                      <option value="${f.id}" ${contrato.fornecedor_id === f.id ? 'selected' : ''}>
+                        ${escapeHtml(f.razao_social)}
+                      </option>
+                    `).join('')}
+                  </select>
+                </div>
+                <div class="form-group mb-0">
+                  <label class="form-label">Objeto *</label>
+                  <textarea class="form-control-modern" name="objeto" rows="3" required>${escapeHtml(contrato.objeto || '')}</textarea>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                Cancelar
+              </button>
+              <button class="btn-modern btn-primary" id="btnSaveContrato">
+                <i data-lucide="save"></i>
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      `);
+
+      document.body.appendChild(modal);
+      lucide.createIcons();
+
+      qs("#btnSaveContrato", modal).onclick = async () => {
+        const form = qs("#formContrato", modal);
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        const data = new FormData(form);
+        const obj = Object.fromEntries(data.entries());
+
+        if (isEdit) {
+          Object.assign(contrato, obj);
+          await supabaseUpdate('contratos', contrato.id, obj);
+        } else {
+          const newContrato = { id: uuid(), ...obj };
+          DB.contratos.push(newContrato);
+          await supabaseInsert('contratos', newContrato);
+        }
+
+        saveDB();
+        modal.remove();
+        await renderRoute();
+        showToast(`Contrato ${isEdit ? 'atualizado' : 'criado'} com sucesso!`, 'success');
+      };
+    }
+
+    window.editContrato = (id) => showContratoModal(id);
+    window.deleteContrato = async (id) => {
+      if (!confirm('Deseja realmente excluir este contrato?')) return;
+      DB.contratos = DB.contratos.filter(c => c.id !== id);
+      await supabaseDelete('contratos', id);
+      saveDB();
+      await renderRoute();
+      showToast('Contrato excluído com sucesso!', 'success');
+    };
+
+    /*********************
+     * ATAS DE REGISTRO DE PREÇOS
+     *********************/
+    async function renderAtas() {
+      const view = qs("#view");
+      view.innerHTML = `
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <button class="btn-modern btn-primary" id="btnNovaAta">
+              <i data-lucide="plus"></i>
+              Nova Ata
+            </button>
+          </div>
+          <div class="toolbar-right">
+            <span class="badge-modern badge-primary">
+              <i data-lucide="file-check"></i>
+              ${DB.atas.length} atas
+            </span>
+          </div>
+        </div>
+
+        <div class="card-modern">
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>Número</th>
+                  <th>Fornecedor</th>
+                  <th>Objeto</th>
+                  <th class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${DB.atas.map(a => {
+                  const fornecedor = findById(DB.fornecedores, a.fornecedor_id);
+                  return `
+                    <tr>
+                      <td><strong>${escapeHtml(a.numero)}</strong></td>
+                      <td>${escapeHtml(fornecedor?.razao_social || '-')}</td>
+                      <td>${escapeHtml(a.objeto)}</td>
+                      <td class="text-end">
+                        <button class="btn-modern btn-outline btn-sm" onclick="editAta('${a.id}')">
+                          <i data-lucide="edit-2"></i>
+                        </button>
+                        <button class="btn-modern btn-danger btn-sm" onclick="deleteAta('${a.id}')">
+                          <i data-lucide="trash-2"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      qs("#btnNovaAta").onclick = () => showAtaModal();
+    }
+
+    function showAtaModal(id = null) {
+      const ata = id ? findById(DB.atas, id) : {};
+      const isEdit = !!id;
+
+      const modal = el(`
+        <div class="modal-overlay active">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title">${isEdit ? 'Editar' : 'Nova'} Ata de Registro de Preços</h3>
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="formAta">
+                <div class="form-group">
+                  <label class="form-label">Número da Ata *</label>
+                  <input type="text" class="form-control-modern" name="numero" value="${escapeHtml(ata.numero || '')}" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Pregão</label>
+                  <input type="text" class="form-control-modern" name="pregao" value="${escapeHtml(ata.pregao || '')}" placeholder="Ex: 001/2025">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div class="form-group">
+                    <label class="form-label">Vigência Início</label>
+                    <input type="date" class="form-control-modern" name="vigencia_inicio" value="${ata.vigencia_inicio || ''}">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Vigência Fim</label>
+                    <input type="date" class="form-control-modern" name="vigencia_fim" value="${ata.vigencia_fim || ''}">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Fornecedor *</label>
+                  <select class="form-control-modern" name="fornecedor_id" required>
+                    <option value="">Selecione...</option>
+                    ${DB.fornecedores.map(f => `
+                      <option value="${f.id}" ${ata.fornecedor_id === f.id ? 'selected' : ''}>
+                        ${escapeHtml(f.razao_social)}
+                      </option>
+                    `).join('')}
+                  </select>
+                </div>
+                <div class="form-group mb-0">
+                  <label class="form-label">Objeto *</label>
+                  <textarea class="form-control-modern" name="objeto" rows="3" required>${escapeHtml(ata.objeto || '')}</textarea>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                Cancelar
+              </button>
+              <button class="btn-modern btn-primary" id="btnSaveAta">
+                <i data-lucide="save"></i>
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      `);
+
+      document.body.appendChild(modal);
+      lucide.createIcons();
+
+      qs("#btnSaveAta", modal).onclick = async () => {
+        const form = qs("#formAta", modal);
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        const data = Object.fromEntries(new FormData(form).entries());
+        
+        if (isEdit) {
+          const index = DB.atas.findIndex(a => a.id === id);
+          if (index !== -1) {
+            DB.atas[index] = { ...DB.atas[index], ...data };
+            await supabaseUpdate('atas', id, data);
+          }
+        } else {
+          const newAta = { id: uuid(), ...data };
+          DB.atas.push(newAta);
+          await supabaseInsert('atas', newAta);
+        }
+
+        saveDB();
+        modal.remove();
+        await renderRoute();
+        showToast(`Ata ${isEdit ? 'atualizada' : 'cadastrada'} com sucesso!`, 'success');
+      };
+    }
+
+    window.editAta = (id) => showAtaModal(id);
+    window.deleteAta = async (id) => {
+      if (!confirm('Deseja realmente excluir esta ata?')) return;
+      DB.atas = DB.atas.filter(a => a.id !== id);
+      await supabaseDelete('atas', id);
+      saveDB();
+      await renderRoute();
+      showToast('Ata excluída com sucesso!', 'success');
+    };
+
+    /*********************
+     * DOCUMENTOS (Simplified - Similar pattern)
+     *********************/
+    async function renderDocumentos() {
+      const view = qs("#view");
+      view.innerHTML = `
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <button class="btn-modern btn-primary" id="btnNovoDoc">
+              <i data-lucide="plus"></i>
+              Novo Empenho/AFT
+            </button>
+          </div>
+          <div class="toolbar-right">
+            <span class="badge-modern badge-primary">
+              <i data-lucide="folder"></i>
+              ${DB.documentos.length} documentos
+            </span>
+          </div>
+        </div>
+
+        <div class="card-modern">
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Número</th>
+                  <th>Vínculo</th>
+                  <th>Combustível</th>
+                  <th class="text-end">Saldo Inicial</th>
+                  <th class="text-end">Saldo Atual</th>
+                  <th class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${DB.documentos.map(d => {
+                  // Compatibilidade: se tiver contrato_id mas não tipo_vinculo, assumir CONTRATO
+                  if (d.contrato_id && !d.tipo_vinculo) {
+                    d.tipo_vinculo = 'CONTRATO';
+                    d.vinculo_id = d.contrato_id;
+                  }
+                  
+                  let vinculoInfo = '-';
+                  if (d.tipo_vinculo === 'CONTRATO') {
+                    const contrato = findById(DB.contratos, d.vinculo_id || d.contrato_id);
+                    vinculoInfo = contrato ? `<small>Contrato</small><br>${escapeHtml(contrato.numero)}` : '-';
+                  } else if (d.tipo_vinculo === 'ATA') {
+                    const ata = findById(DB.atas, d.vinculo_id);
+                    vinculoInfo = ata ? `<small>Ata</small><br>${escapeHtml(ata.numero)}` : '-';
+                  }
+                  
+                  return `
+                    <tr>
+                      <td><span class="badge-modern ${d.tipo_documento === DOC_TIPO.EMP ? 'badge-primary' : 'badge-warning'}">${d.tipo_documento}</span></td>
+                      <td><strong>${escapeHtml(d.numero)}</strong></td>
+                      <td>${vinculoInfo}</td>
+                      <td>${COMB_LABEL[d.combustivel]}</td>
+                      <td class="text-end">${fmtBRL(d.saldo_inicial || d.saldo_atual || 0)}</td>
+                      <td class="text-end">${fmtBRL(d.saldo_atual || 0)}</td>
+                      <td class="text-end">
+                        <button class="btn-modern btn-outline btn-sm" onclick="editDocumento('${d.id}')">
+                          <i data-lucide="edit-2"></i>
+                        </button>
+                        <button class="btn-modern btn-danger btn-sm" onclick="deleteDocumento('${d.id}')">
+                          <i data-lucide="trash-2"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      qs("#btnNovoDoc").onclick = () => showDocumentoModal();
+    }
+
+    function showDocumentoModal(id = null) {
+      const doc = id ? findById(DB.documentos, id) : { saldo_atual: 0 };
+      const isEdit = !!id;
+
+      const modal = el(`
+        <div class="modal-overlay active">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title">${isEdit ? 'Editar' : 'Novo'} Documento</h3>
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="formDoc">
+                <div class="form-group">
+                  <label class="form-label">Tipo *</label>
+                  <select class="form-control-modern" name="tipo_documento" required>
+                    <option value="EMP" ${doc.tipo_documento === DOC_TIPO.EMP ? 'selected' : ''}>Empenho</option>
+                    <option value="AFT" ${doc.tipo_documento === DOC_TIPO.AFT ? 'selected' : ''}>AFT</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Número *</label>
+                  <input type="text" class="form-control-modern" name="numero" value="${escapeHtml(doc.numero || '')}" required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div class="form-group">
+                    <label class="form-label">Pré-Empenho</label>
+                    <input type="text" class="form-control-modern" name="pre_empenho" value="${escapeHtml(doc.pre_empenho || '')}" placeholder="Opcional">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Ordem de Fornecimento</label>
+                    <input type="text" class="form-control-modern" name="ordem_fornecimento" value="${escapeHtml(doc.ordem_fornecimento || '')}" placeholder="Opcional">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Vincular a *</label>
+                  <select class="form-control-modern" id="tipoVinculo" name="tipo_vinculo" required>
+                    <option value="CONTRATO" ${doc.tipo_vinculo === 'CONTRATO' ? 'selected' : ''}>Contrato</option>
+                    <option value="ATA" ${doc.tipo_vinculo === 'ATA' ? 'selected' : ''}>Ata de Preços</option>
+                  </select>
+                </div>
+                <div class="form-group" id="grupoVinculo">
+                  <label class="form-label" id="labelVinculo">Contrato *</label>
+                  <select class="form-control-modern" id="selectVinculo" name="vinculo_id" required>
+                    <option value="">Selecione...</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Combustível *</label>
+                  <select class="form-control-modern" name="combustivel" required>
+                    ${Object.entries(COMB_LABEL).map(([k, v]) => `
+                      <option value="${k}" ${doc.combustivel === k ? 'selected' : ''}>${v}</option>
+                    `).join('')}
+                  </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div class="form-group">
+                    <label class="form-label">Saldo Inicial (R$) *</label>
+                    <input type="number" step="0.01" class="form-control-modern" name="saldo_inicial" value="${doc.saldo_inicial || doc.saldo_atual || 0}" required ${isEdit ? 'readonly' : ''}>
+                  </div>
+                  <div class="form-group mb-0">
+                    <label class="form-label">Saldo Atual (R$)</label>
+                    <input type="number" step="0.01" class="form-control-modern" name="saldo_atual" value="${doc.saldo_atual || 0}" readonly style="background: #f0f0f0;">
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                Cancelar
+              </button>
+              <button class="btn-modern btn-primary" id="btnSaveDoc">
+                <i data-lucide="save"></i>
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      `);
+
+      document.body.appendChild(modal);
+      lucide.createIcons();
+
+      // Função para atualizar dropdown de vínculo
+      const atualizarVinculo = () => {
+        const tipoVinculo = qs("#tipoVinculo", modal).value;
+        const selectVinculo = qs("#selectVinculo", modal);
+        const labelVinculo = qs("#labelVinculo", modal);
+        
+        if (tipoVinculo === 'CONTRATO') {
+          labelVinculo.textContent = 'Contrato *';
+          selectVinculo.innerHTML = '<option value="">Selecione...</option>' +
+            DB.contratos.map(c => `
+              <option value="${c.id}" ${doc.vinculo_id === c.id || doc.contrato_id === c.id ? 'selected' : ''}>
+                ${escapeHtml(c.numero)}
+              </option>
+            `).join('');
+        } else {
+          labelVinculo.textContent = 'Ata de Preços *';
+          selectVinculo.innerHTML = '<option value="">Selecione...</option>' +
+            DB.atas.map(a => `
+              <option value="${a.id}" ${doc.vinculo_id === a.id ? 'selected' : ''}>
+                ${escapeHtml(a.numero)}
+              </option>
+            `).join('');
+        }
+      };
+
+      // Popular inicial
+      if (!doc.tipo_vinculo && doc.contrato_id) {
+        doc.tipo_vinculo = 'CONTRATO';
+        doc.vinculo_id = doc.contrato_id;
+      }
+      atualizarVinculo();
+
+      // Atualizar quando mudar tipo
+      qs("#tipoVinculo", modal).onchange = atualizarVinculo;
+
+      qs("#btnSaveDoc", modal).onclick = async () => {
+        const form = qs("#formDoc", modal);
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        const data = new FormData(form);
+        const obj = Object.fromEntries(data.entries());
+        obj.saldo_inicial = parseFloat(obj.saldo_inicial);
+        obj.saldo_atual = parseFloat(obj.saldo_atual);
+        
+        // Se for novo, saldo_atual = saldo_inicial
+        if (!isEdit) {
+          obj.saldo_atual = obj.saldo_inicial;
+        }
+
+        if (isEdit) {
+          Object.assign(doc, obj);
+          await supabaseUpdate('documentos', doc.id, obj);
+        } else {
+          const newDoc = { id: uuid(), ...obj };
+          DB.documentos.push(newDoc);
+          await supabaseInsert('documentos', newDoc);
+        }
+
+        saveDB();
+        modal.remove();
+        await renderRoute();
+        showToast(`Documento ${isEdit ? 'atualizado' : 'criado'} com sucesso!`, 'success');
+      };
+    }
+
+    window.editDocumento = (id) => showDocumentoModal(id);
+    window.deleteDocumento = async (id) => {
+      if (!confirm('Deseja realmente excluir este documento?')) return;
+      DB.documentos = DB.documentos.filter(d => d.id !== id);
+      await supabaseDelete('documentos', id);
+      saveDB();
+      await renderRoute();
+      showToast('Documento excluído com sucesso!', 'success');
+    };
+
+    /*********************
+     * MOTORISTAS & VEÍCULOS (Similar simplified patterns)
+     *********************/
+    async function renderMotoristas() {
+      const view = qs("#view");
+      view.innerHTML = `
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <button class="btn-modern btn-primary" id="btnNovoMotorista">
+              <i data-lucide="plus"></i>
+              Novo Motorista
+            </button>
+          </div>
+          <div class="toolbar-right">
+            <span class="badge-modern badge-primary">
+              <i data-lucide="users"></i>
+              ${DB.motoristas.length} motoristas
+            </span>
+          </div>
+        </div>
+
+        <div class="card-modern">
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>CPF</th>
+                  <th>CNH</th>
+                  <th class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${DB.motoristas.map(m => `
+                  <tr>
+                    <td><strong>${escapeHtml(m.nome)}</strong></td>
+                    <td>${escapeHtml(m.cpf)}</td>
+                    <td>${escapeHtml(m.cnh || '-')}</td>
+                    <td class="text-end">
+                      <button class="btn-modern btn-outline btn-sm" onclick="editMotorista('${m.id}')">
+                        <i data-lucide="edit-2"></i>
+                      </button>
+                      <button class="btn-modern btn-danger btn-sm" onclick="deleteMotorista('${m.id}')">
+                        <i data-lucide="trash-2"></i>
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      qs("#btnNovoMotorista").onclick = () => showMotoristaModal();
+    }
+
+    function showMotoristaModal(id = null) {
+      const motorista = id ? findById(DB.motoristas, id) : {};
+      const isEdit = !!id;
+
+      const modal = el(`
+        <div class="modal-overlay active">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title">${isEdit ? 'Editar' : 'Novo'} Motorista</h3>
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="formMotorista">
+                <div class="form-group">
+                  <label class="form-label">Nome *</label>
+                  <input type="text" class="form-control-modern" name="nome" value="${escapeHtml(motorista.nome || '')}" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">CPF *</label>
+                  <input type="text" class="form-control-modern" name="cpf" value="${escapeHtml(motorista.cpf || '')}" required>
+                </div>
+                <div class="form-group mb-0">
+                  <label class="form-label">CNH</label>
+                  <input type="text" class="form-control-modern" name="cnh" value="${escapeHtml(motorista.cnh || '')}">
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                Cancelar
+              </button>
+              <button class="btn-modern btn-primary" id="btnSaveMotorista">
+                <i data-lucide="save"></i>
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      `);
+
+      document.body.appendChild(modal);
+      lucide.createIcons();
+
+      qs("#btnSaveMotorista", modal).onclick = async () => {
+        const form = qs("#formMotorista", modal);
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        const data = new FormData(form);
+        const obj = Object.fromEntries(data.entries());
+        
+        // Enviar todos os campos para o Supabase
+        const supabaseFields = {
+          nome: obj.nome,
+          cpf: obj.cpf || null,
+          cnh: obj.cnh || null
+        };
+
+        if (isEdit) {
+          Object.assign(motorista, obj);
+          await supabaseUpdate('motoristas', motorista.id, supabaseFields);
+        } else {
+          const newMotorista = { id: uuid(), ...obj };
+          DB.motoristas.push(newMotorista);
+          await supabaseInsert('motoristas', { id: newMotorista.id, ...supabaseFields });
+        }
+
+        saveDB();
+        modal.remove();
+        await renderRoute();
+        showToast(`Motorista ${isEdit ? 'atualizado' : 'criado'} com sucesso!`, 'success');
+      };
+    }
+
+    window.editMotorista = (id) => showMotoristaModal(id);
+    window.deleteMotorista = async (id) => {
+      if (!confirm('Deseja realmente excluir este motorista?')) return;
+      DB.motoristas = DB.motoristas.filter(m => m.id !== id);
+      await supabaseDelete('motoristas', id);
+      saveDB();
+      await renderRoute();
+      showToast('Motorista excluído com sucesso!', 'success');
+    };
+
+    async function renderVeiculos() {
+      const view = qs("#view");
+      view.innerHTML = `
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <button class="btn-modern btn-primary" id="btnNovoVeiculo">
+              <i data-lucide="plus"></i>
+              Novo Veículo
+            </button>
+          </div>
+          <div class="toolbar-right">
+            <span class="badge-modern badge-primary">
+              <i data-lucide="car"></i>
+              ${DB.veiculos.length} veículos
+            </span>
+          </div>
+        </div>
+
+        <div class="card-modern">
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>Placa</th>
+                  <th>Modelo</th>
+                  <th>Ano</th>
+                  <th class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${DB.veiculos.map(v => `
+                  <tr>
+                    <td><strong>${escapeHtml(v.placa)}</strong></td>
+                    <td>${escapeHtml(v.modelo || '-')}</td>
+                    <td>${escapeHtml(v.ano || '-')}</td>
+                    <td class="text-end">
+                      <button class="btn-modern btn-outline btn-sm" onclick="editVeiculo('${v.id}')">
+                        <i data-lucide="edit-2"></i>
+                      </button>
+                      <button class="btn-modern btn-danger btn-sm" onclick="deleteVeiculo('${v.id}')">
+                        <i data-lucide="trash-2"></i>
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      qs("#btnNovoVeiculo").onclick = () => showVeiculoModal();
+    }
+
+    function showVeiculoModal(id = null) {
+      const veiculo = id ? findById(DB.veiculos, id) : {};
+      const isEdit = !!id;
+
+      const modal = el(`
+        <div class="modal-overlay active">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title">${isEdit ? 'Editar' : 'Novo'} Veículo</h3>
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="formVeiculo">
+                <div class="form-group">
+                  <label class="form-label">Placa *</label>
+                  <input type="text" class="form-control-modern" name="placa" value="${escapeHtml(veiculo.placa || '')}" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Modelo</label>
+                  <input type="text" class="form-control-modern" name="modelo" value="${escapeHtml(veiculo.modelo || '')}">
+                </div>
+                <div class="form-group mb-0">
+                  <label class="form-label">Ano</label>
+                  <input type="text" class="form-control-modern" name="ano" value="${escapeHtml(veiculo.ano || '')}">
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                Cancelar
+              </button>
+              <button class="btn-modern btn-primary" id="btnSaveVeiculo">
+                <i data-lucide="save"></i>
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      `);
+
+      document.body.appendChild(modal);
+      lucide.createIcons();
+
+      qs("#btnSaveVeiculo", modal).onclick = async () => {
+        const form = qs("#formVeiculo", modal);
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        const data = new FormData(form);
+        const obj = Object.fromEntries(data.entries());
+        
+        // Montar descrição para compatibilidade (modelo + ano)
+        let descricao = obj.modelo || '';
+        if (obj.ano) {
+          descricao = descricao ? `${descricao} ${obj.ano}` : obj.ano;
+        }
+        if (!descricao) descricao = obj.placa; // fallback
+        
+        const supabaseFields = {
+          placa: obj.placa,
+          descricao: descricao,
+          modelo: obj.modelo || null,
+          ano: obj.ano || null
+        };
+
+        if (isEdit) {
+          Object.assign(veiculo, obj);
+          await supabaseUpdate('veiculos', veiculo.id, supabaseFields);
+        } else {
+          const newVeiculo = { id: uuid(), ...obj };
+          DB.veiculos.push(newVeiculo);
+          await supabaseInsert('veiculos', { id: newVeiculo.id, ...supabaseFields });
+        }
+
+        saveDB();
+        modal.remove();
+        await renderRoute();
+        showToast(`Veículo ${isEdit ? 'atualizado' : 'criado'} com sucesso!`, 'success');
+      };
+    }
+
+    window.editVeiculo = (id) => showVeiculoModal(id);
+    window.deleteVeiculo = async (id) => {
+      if (!confirm('Deseja realmente excluir este veículo?')) return;
+      DB.veiculos = DB.veiculos.filter(v => v.id !== id);
+      await supabaseDelete('veiculos', id);
+      saveDB();
+      await renderRoute();
+      showToast('Veículo excluído com sucesso!', 'success');
+    };
+
+    /*********************
+     * FISCAL
+     *********************/
+    async function renderFiscal() {
+      const view = qs("#view");
+      const f = DB.fiscal;
+
+      view.innerHTML = `
+        <div class="toolbar">
+          <h5 class="mb-0">Dados do Fiscal de Contrato</h5>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-12">
+            <div class="card-modern">
+              <form id="formFiscal">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Nome Completo *</label>
+                    <input type="text" class="form-control-modern" name="nome" value="${escapeHtml(f.nome)}" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Cargo *</label>
+                    <input type="text" class="form-control-modern" name="cargo" value="${escapeHtml(f.cargo)}" required>
+                  </div>
+                  <div class="col-md-8">
+                    <label class="form-label">Lotação *</label>
+                    <input type="text" class="form-control-modern" name="lotacao" value="${escapeHtml(f.lotacao)}" required>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Telefone *</label>
+                    <input type="text" class="form-control-modern" name="telefone" value="${escapeHtml(f.telefone)}" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Portaria *</label>
+                    <input type="text" class="form-control-modern" name="portaria" value="${escapeHtml(f.portaria)}" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Publicação Diorondon *</label>
+                    <input type="text" class="form-control-modern" name="portaria_diorondon" value="${escapeHtml(f.portaria_diorondon)}" required placeholder="Ex: 5895 de 24/02/2025">
+                  </div>
+                </div>
+
+                <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color);">
+                  <button type="submit" class="btn-modern btn-primary">
+                    <i data-lucide="save"></i>
+                    Salvar Dados
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+
+      lucide.createIcons();
+
+      qs("#formFiscal").onsubmit = async (e) => {
+        e.preventDefault();
+        const data = new FormData(e.target);
+        const fiscalData = Object.fromEntries(data.entries());
+        Object.assign(DB.fiscal, fiscalData);
+        await supabaseUpdateFiscal(fiscalData);
+        saveDB();
+        showToast('Dados do fiscal salvos com sucesso!', 'success');
+      };
+    }
+
+    /*********************
+     * NOTAS FISCAIS (Functionality mantida, UI modernizada)
+     *********************/
+    async function renderNotas() {
+      const view = qs("#view");
+      const notasAbertas = DB.notas.filter(n => !n.finalizada_em);
+      const notasFinalizadas = DB.notas.filter(n => n.finalizada_em);
+
+      view.innerHTML = `
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <button class="btn-modern btn-primary" id="btnNovaNota">
+              <i data-lucide="plus"></i>
+              Nova Nota Fiscal
+            </button>
+          </div>
+          <div class="toolbar-right">
+            <span class="badge-modern badge-warning">
+              <i data-lucide="clock"></i>
+              ${notasAbertas.length} em andamento
+            </span>
+            <span class="badge-modern badge-success">
+              <i data-lucide="check-circle"></i>
+              ${notasFinalizadas.length} finalizadas
+            </span>
+          </div>
+        </div>
+
+        <div class="card-modern">
+          <h5 class="mb-3">Notas em Andamento</h5>
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>NF</th>
+                  <th>Combustível</th>
+                  <th>Empenho</th>
+                  <th class="text-end">Total</th>
+                  <th class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${notasAbertas.map(n => {
+                  const emp = findById(DB.documentos, n.empenho_id);
+                  return `
+                    <tr>
+                      <td><strong>${escapeHtml(n.numero_nf)}</strong></td>
+                      <td>${COMB_LABEL[n.combustivel]}</td>
+                      <td>${escapeHtml(emp?.numero || '-')}</td>
+                      <td class="text-end">${fmtBRL(n.valor_total)}</td>
+                      <td class="text-end">
+                        <button class="btn-modern btn-primary btn-sm" onclick="gerenciarNota('${n.id}')">
+                          <i data-lucide="edit"></i>
+                          Gerenciar
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('') || '<tr><td colspan="5" class="text-center text-secondary">Nenhuma nota em andamento</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card-modern mt-4">
+          <h5 class="mb-3">Notas Finalizadas</h5>
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>NF</th>
+                  <th>Combustível</th>
+                  <th>Empenho</th>
+                  <th>Finalizada em</th>
+                  <th class="text-end">Total</th>
+                  <th class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${notasFinalizadas.map(n => {
+                  const emp = findById(DB.documentos, n.empenho_id);
+                  return `
+                    <tr>
+                      <td><strong>${escapeHtml(n.numero_nf)}</strong></td>
+                      <td>${COMB_LABEL[n.combustivel]}</td>
+                      <td>${escapeHtml(emp?.numero || '-')}</td>
+                      <td>${n.finalizada_em ? isoToBR(n.finalizada_em.split('T')[0]) : '-'}</td>
+                      <td class="text-end">${fmtBRL(n.valor_total)}</td>
+                      <td class="text-end">
+                        <button class="btn-modern btn-outline btn-sm" onclick="printRelatorioByNF('${n.id}')">
+                          <i data-lucide="printer"></i>
+                        </button>
+                        <button class="btn-modern btn-danger btn-sm" onclick="deleteNota('${n.id}')">
+                          <i data-lucide="trash-2"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('') || '<tr><td colspan="6" class="text-center text-secondary">Nenhuma nota finalizada</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      qs("#btnNovaNota").onclick = () => showNotaModal();
+    }
+
+    function showNotaModal() {
+      const modal = el(`
+        <div class="modal-overlay active">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title">Nova Nota Fiscal</h3>
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="formNota">
+                <div class="form-group">
+                  <label class="form-label">Número NF *</label>
+                  <input type="text" class="form-control-modern" name="numero_nf" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Combustível *</label>
+                  <select class="form-control-modern" name="combustivel" id="selCombustivel" required>
+                    <option value="">Selecione...</option>
+                    ${Object.entries(COMB_LABEL).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Empenho *</label>
+                  <select class="form-control-modern" name="empenho_id" id="selEmpenho" required disabled>
+                    <option value="">Primeiro selecione o combustível</option>
+                  </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div class="form-group">
+                    <label class="form-label">Período Início *</label>
+                    <input type="date" class="form-control-modern" name="periodo_inicio" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Período Fim *</label>
+                    <input type="date" class="form-control-modern" name="periodo_fim" required>
+                  </div>
+                </div>
+                <div class="form-group mb-0" id="infoVinculo" style="display:none;">
+                  <label class="form-label">Vinculado a:</label>
+                  <div class="form-control-modern" style="background: #f8fafc; color: #64748b;" id="textoVinculo"></div>
+                  <input type="hidden" name="contrato_id" id="hiddenContratoId">
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                Cancelar
+              </button>
+              <button class="btn-modern btn-primary" id="btnSaveNota">
+                <i data-lucide="save"></i>
+                Criar
+              </button>
+            </div>
+          </div>
+        </div>
+      `);
+
+      document.body.appendChild(modal);
+      lucide.createIcons();
+
+      // Filtrar empenhos baseado em combustível
+      const updateEmpenhos = () => {
+        const combustivel = qs("#selCombustivel", modal).value;
+        const selEmp = qs("#selEmpenho", modal);
+        const infoVinculo = qs("#infoVinculo", modal);
+
+        if (!combustivel) {
+          selEmp.disabled = true;
+          selEmp.innerHTML = '<option value="">Primeiro selecione o combustível</option>';
+          infoVinculo.style.display = 'none';
+          return;
+        }
+
+        const empenhos = DB.documentos.filter(d => 
+          d.tipo_documento === DOC_TIPO.EMP && 
+          d.combustivel === combustivel
+        );
+
+        selEmp.disabled = false;
+        selEmp.innerHTML = empenhos.length > 0
+          ? '<option value="">Selecione...</option>' + empenhos.map(e => {
+              // Compatibilidade: converter contrato_id antigo
+              if (e.contrato_id && !e.tipo_vinculo) {
+                e.tipo_vinculo = 'CONTRATO';
+                e.vinculo_id = e.contrato_id;
+              }
+              
+              let vinculoInfo = '';
+              if (e.tipo_vinculo === 'ATA') {
+                const ata = findById(DB.atas, e.vinculo_id);
+                vinculoInfo = ata ? ` - Ata ${escapeHtml(ata.numero)}` : '';
+              } else {
+                const contrato = findById(DB.contratos, e.vinculo_id || e.contrato_id);
+                vinculoInfo = contrato ? ` - Contrato ${escapeHtml(contrato.numero)}` : '';
+              }
+              
+              return `<option value="${e.id}">${escapeHtml(e.numero)}${vinculoInfo} - Saldo: ${fmtBRL(e.saldo_atual)}</option>`;
+            }).join('')
+          : '<option value="">Nenhum empenho disponível</option>';
+      };
+
+      // Atualizar info de vínculo ao selecionar empenho
+      const updateVinculoInfo = () => {
+        const empenhoId = qs("#selEmpenho", modal).value;
+        const infoVinculo = qs("#infoVinculo", modal);
+        const textoVinculo = qs("#textoVinculo", modal);
+        const hiddenContratoId = qs("#hiddenContratoId", modal);
+
+        if (!empenhoId) {
+          infoVinculo.style.display = 'none';
+          return;
+        }
+
+        const empenho = findById(DB.documentos, empenhoId);
+        if (!empenho) return;
+
+        // Compatibilidade
+        if (empenho.contrato_id && !empenho.tipo_vinculo) {
+          empenho.tipo_vinculo = 'CONTRATO';
+          empenho.vinculo_id = empenho.contrato_id;
+        }
+
+        let vinculoTexto = '';
+        let vinculoId = '';
+
+        if (empenho.tipo_vinculo === 'ATA') {
+          const ata = findById(DB.atas, empenho.vinculo_id);
+          if (ata) {
+            const fornecedor = findById(DB.fornecedores, ata.fornecedor_id);
+            vinculoTexto = `<strong>Ata:</strong> ${escapeHtml(ata.numero)}<br><strong>Fornecedor:</strong> ${escapeHtml(fornecedor?.razao_social || '-')}`;
+            vinculoId = ata.id;
+          }
+        } else {
+          const contrato = findById(DB.contratos, empenho.vinculo_id || empenho.contrato_id);
+          if (contrato) {
+            const fornecedor = findById(DB.fornecedores, contrato.fornecedor_id);
+            vinculoTexto = `<strong>Contrato:</strong> ${escapeHtml(contrato.numero)}<br><strong>Fornecedor:</strong> ${escapeHtml(fornecedor?.razao_social || '-')}`;
+            vinculoId = contrato.id;
+          }
+        }
+
+        textoVinculo.innerHTML = vinculoTexto;
+        hiddenContratoId.value = vinculoId;
+        infoVinculo.style.display = 'block';
+      };
+
+      qs("#selCombustivel", modal).onchange = updateEmpenhos;
+      qs("#selEmpenho", modal).onchange = updateVinculoInfo;
+
+      qs("#btnSaveNota", modal).onclick = async () => {
+        const form = qs("#formNota", modal);
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        const data = new FormData(form);
+        const obj = Object.fromEntries(data.entries());
+
+        const novaNota = {
+          id: uuid(),
+          numero_nf: obj.numero_nf,
+          combustivel: obj.combustivel,
+          empenho_id: obj.empenho_id,
+          periodo_inicio: obj.periodo_inicio,
+          periodo_fim: obj.periodo_fim,
+          status: 'ABERTA',
+          data_emissao: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+          // Campos extras para LocalStorage (não vão para Supabase)
+          contrato_id: obj.contrato_id,
+          valor_total: 0,
+          finalizada_em: null
+        };
+        
+        // Filtrar apenas campos que existem no Supabase
+        const supabaseFields = {
+          id: novaNota.id,
+          numero_nf: novaNota.numero_nf,
+          combustivel: novaNota.combustivel,
+          empenho_id: novaNota.empenho_id,
+          periodo_inicio: novaNota.periodo_inicio,
+          periodo_fim: novaNota.periodo_fim,
+          status: novaNota.status,
+          data_emissao: novaNota.data_emissao,
+          valor_total: novaNota.valor_total,
+          finalizada_em: novaNota.finalizada_em
+        };
+
+        DB.notas.push(novaNota);
+        await supabaseInsert('notas', supabaseFields);
+        saveDB();
+        modal.remove();
+        showToast('Nota fiscal criada com sucesso!', 'success');
+        gerenciarNota(novaNota.id);
+      };
+    }
+
+    window.gerenciarNota = (id) => {
+      location.hash = `#/notas`;
+      setTimeout(() => showGerenciarNotaModal(id), 100);
+    };
+
+    function showGerenciarNotaModal(notaId) {
+      const nota = findById(DB.notas, notaId);
+      if (!nota) return;
+
+      const itensNota = DB.itens.filter(it => it.nota_fiscal_id === notaId);
+      const totalNF = itensNota.reduce((sum, it) => sum + (it.valor_abastecimento || 0), 0);
+
+      const modal = el(`
+        <div class="modal-overlay active" style="align-items: flex-start; padding: 40px 0;">
+          <div class="modal-content" style="max-width: 1000px;">
+            <div class="modal-header">
+              <h3 class="modal-title">Gerenciar NF ${escapeHtml(nota.numero_nf)}</h3>
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <!-- Informações da NF -->
+              <div class="card-modern" style="background: var(--bg-primary); margin-bottom: 20px;">
+                <div class="row">
+                  <div class="col-md-6">
+                    <p class="mb-1"><strong>Combustível:</strong> ${COMB_LABEL[nota.combustivel]}</p>
+                    <p class="mb-0"><strong>Total NF:</strong> <span class="text-primary fw-bold">${fmtBRL(totalNF)}</span></p>
+                  </div>
+                  <div class="col-md-6 text-end">
+                    ${!nota.finalizada_em ? `
+                      <button class="btn-modern btn-success" id="btnFinalizarNF">
+                        <i data-lucide="check"></i>
+                        Finalizar NF
+                      </button>
+                    ` : `
+                      <span class="badge-modern badge-success">Finalizada em ${isoToBR(nota.finalizada_em.split('T')[0])}</span>
+                    `}
+                  </div>
+                </div>
+              </div>
+
+              ${!nota.finalizada_em ? `
+                <!-- Adicionar Abastecimento -->
+                <div class="card-modern" style="margin-bottom: 20px;">
+                  <h6 class="mb-3">Adicionar Abastecimento</h6>
+                  <form id="formAbastecimento" class="row g-3">
+                    <div class="col-md-3">
+                      <label class="form-label">Data *</label>
+                      <input type="date" class="form-control-modern" name="data_abastecimento" required>
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Hora</label>
+                      <input type="time" class="form-control-modern" name="hora">
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Veículo *</label>
+                      <select class="form-control-modern" name="veiculo_id" required>
+                        <option value="">Selecione...</option>
+                        ${DB.veiculos.map(v => `<option value="${v.id}">${escapeHtml(v.placa)}</option>`).join('')}
+                      </select>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Motorista *</label>
+                      <select class="form-control-modern" name="motorista_id" required>
+                        <option value="">Selecione...</option>
+                        ${DB.motoristas.map(m => `<option value="${m.id}">${escapeHtml(m.nome)}</option>`).join('')}
+                      </select>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Qtd Litros *</label>
+                      <input type="number" step="0.001" class="form-control-modern" name="qtd_litros" required>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Valor Unit (R$) *</label>
+                      <input type="number" step="0.001" class="form-control-modern" name="valor_unitario" required>
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">KM</label>
+                      <input type="number" class="form-control-modern" name="km">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Doc Abast.</label>
+                      <input type="text" class="form-control-modern" name="numero_doc">
+                    </div>
+                    <div class="col-12">
+                      <button type="submit" class="btn-modern btn-primary">
+                        <i data-lucide="plus"></i>
+                        Adicionar
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              ` : ''}
+
+              <!-- Lista de Abastecimentos -->
+              <div class="card-modern">
+                <h6 class="mb-3">Abastecimentos (${itensNota.length})</h6>
+                <div class="table-responsive">
+                  <table class="table-modern">
+                    <thead>
+                      <tr>
+                        <th>Data</th>
+                        <th>Placa</th>
+                        <th>Motorista</th>
+                        <th class="text-end">Litros</th>
+                        <th class="text-end">Valor Unit</th>
+                        <th class="text-end">Total</th>
+                        ${!nota.finalizada_em ? '<th class="text-end">Ações</th>' : ''}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${itensNota.map(it => {
+                        const v = findById(DB.veiculos, it.veiculo_id);
+                        const m = findById(DB.motoristas, it.motorista_id);
+                        return `
+                          <tr>
+                            <td>${isoToBR(it.data_abastecimento)} ${it.hora || ''}</td>
+                            <td>${escapeHtml(v?.placa || '-')}</td>
+                            <td>${escapeHtml(m?.nome || '-')}</td>
+                            <td class="text-end">${fmtLitros(it.qtd_litros)}</td>
+                            <td class="text-end">${fmtBRL(it.valor_unitario)}</td>
+                            <td class="text-end">${fmtBRL(it.valor_abastecimento)}</td>
+                            ${!nota.finalizada_em ? `
+                              <td class="text-end">
+                                <button class="btn-modern btn-danger btn-sm" onclick="deleteAbastecimento('${it.id}', '${notaId}')">
+                                  <i data-lucide="trash-2"></i>
+                                </button>
+                              </td>
+                            ` : ''}
+                          </tr>
+                        `;
+                      }).join('') || '<tr><td colspan="7" class="text-center text-secondary">Nenhum abastecimento</td></tr>'}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colspan="${!nota.finalizada_em ? 6 : 5}" class="text-end"><strong>TOTAL NF:</strong></td>
+                        <td class="text-end"><strong>${fmtBRL(totalNF)}</strong></td>
+                        ${!nota.finalizada_em ? '<td></td>' : ''}
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `);
+
+      document.body.appendChild(modal);
+      lucide.createIcons();
+
+      if (!nota.finalizada_em) {
+        // Form submit handler
+        qs("#formAbastecimento", modal).onsubmit = async (e) => {
+          e.preventDefault();
+          const form = e.target;
+          const data = new FormData(form);
+          const obj = Object.fromEntries(data.entries());
+
+          const qtd = parseFloat(obj.qtd_litros);
+          const vUnit = parseFloat(obj.valor_unitario);
+
+          const novoItem = {
+            id: uuid(),
+            nota_fiscal_id: notaId,
+            veiculo_id: obj.veiculo_id || null,
+            motorista_id: obj.motorista_id || null,
+            data_abastecimento: obj.data_abastecimento,
+            hora: obj.hora || null,
+            qtd_litros: qtd,
+            valor_unitario: vUnit,
+            km: obj.km ? parseInt(obj.km) : null,
+            numero_doc: obj.numero_doc || null,
+            // Campos extras para LocalStorage (não vão para Supabase)
+            produto: nota.combustivel,
+            valor_abastecimento: qtd * vUnit
+          };
+          
+          // Filtrar apenas campos que existem no Supabase
+          const supabaseFields = {
+            id: novoItem.id,
+            nota_fiscal_id: novoItem.nota_fiscal_id,
+            veiculo_id: novoItem.veiculo_id,
+            motorista_id: novoItem.motorista_id,
+            data_abastecimento: novoItem.data_abastecimento,
+            hora: novoItem.hora,
+            qtd_litros: novoItem.qtd_litros,
+            valor_unitario: novoItem.valor_unitario,
+            km: novoItem.km,
+            numero_doc: novoItem.numero_doc
+          };
+
+          DB.itens.push(novoItem);
+          await supabaseInsert('itens', supabaseFields);
+          saveDB();
+          modal.remove();
+          showToast('Abastecimento adicionado!', 'success');
+          gerenciarNota(notaId);
+        };
+
+        // Finalizar NF
+        const btnFinalizar = qs("#btnFinalizarNF", modal);
+        if (btnFinalizar) {
+          btnFinalizar.onclick = async () => {
+            if (itensNota.length === 0) {
+              showToast('Adicione ao menos 1 abastecimento antes de finalizar!', 'danger');
+              return;
+            }
+
+            if (!confirm('Deseja finalizar esta NF? Não será mais possível adicionar abastecimentos.')) return;
+
+            nota.finalizada_em = new Date().toISOString();
+            nota.valor_total = totalNF;
+
+            // Atualizar saldo do empenho
+            const emp = findById(DB.documentos, nota.empenho_id);
+            if (emp) {
+              emp.saldo_atual -= totalNF;
+              // Sincronizar empenho atualizado com Supabase
+              await supabaseUpdate('documentos', emp.id, { 
+                saldo_atual: emp.saldo_atual 
+              });
+            }
+
+            // Sincronizar nota finalizada com Supabase
+            await supabaseUpdate('notas', nota.id, {
+              valor_total: nota.valor_total,
+              finalizada_em: nota.finalizada_em
+            });
+
+            saveDB();
+            modal.remove();
+            await renderRoute();
+            showToast('Nota fiscal finalizada com sucesso!', 'success');
+          };
+        }
+      }
+    }
+
+    window.deleteAbastecimento = async (itemId, notaId) => {
+      if (!confirm('Deseja realmente excluir este abastecimento?')) return;
+      DB.itens = DB.itens.filter(it => it.id !== itemId);
+      await supabaseDelete('itens', itemId);
+      saveDB();
+      showToast('Abastecimento excluído!', 'success');
+      
+      // Reabrir modal atualizado
+      const modal = document.querySelector('.modal-overlay');
+      if (modal) modal.remove();
+      gerenciarNota(notaId);
+    };
+
+    window.deleteNota = async (id) => {
+      if (!confirm('Deseja realmente excluir esta nota fiscal?')) return;
+      
+      // Remover itens relacionados (cascata já configurada no Supabase via ON DELETE CASCADE)
+      DB.itens = DB.itens.filter(it => it.nota_fiscal_id !== id);
+      DB.notas = DB.notas.filter(n => n.id !== id);
+      
+      // Deletar do Supabase (itens são deletados automaticamente por cascata)
+      await supabaseDelete('notas', id);
+      
+      saveDB();
+      await renderRoute();
+      showToast('Nota fiscal excluída!', 'success');
+    };
+
+    /*********************
+     * HISTÓRICO
+     *********************/
+    async function renderHistorico() {
+      const view = qs("#view");
+      const itens = DB.itens.slice().sort((a, b) => 
+        ((b.data_abastecimento || "") + (b.hora || "")).localeCompare((a.data_abastecimento || "") + (a.hora || ""))
+      );
+
+      view.innerHTML = `
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <h5 class="mb-0">Histórico Completo</h5>
+          </div>
+          <div class="toolbar-right">
+            <span class="badge-modern badge-primary">
+              <i data-lucide="fuel"></i>
+              ${itens.length} abastecimentos
+            </span>
+          </div>
+        </div>
+
+        <div class="card-modern">
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>Data/Hora</th>
+                  <th>NF</th>
+                  <th>Combustível</th>
+                  <th>Placa</th>
+                  <th>Motorista</th>
+                  <th class="text-end">Litros</th>
+                  <th class="text-end">Valor</th>
+                  <th class="text-end">KM</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itens.map(it => {
+                  const nf = findById(DB.notas, it.nota_fiscal_id);
+                  const v = findById(DB.veiculos, it.veiculo_id);
+                  const m = findById(DB.motoristas, it.motorista_id);
+                  const valorAbast = (it.qtd_litros || 0) * (it.valor_unitario || 0);
+                  return `
+                    <tr>
+                      <td>${isoToBR(it.data_abastecimento)} ${it.hora || ''}</td>
+                      <td><strong>${escapeHtml(nf?.numero_nf || '-')}</strong></td>
+                      <td>
+                        <span class="badge-modern badge-primary">
+                          ${COMB_LABEL[nf?.combustivel] || '-'}
+                        </span>
+                      </td>
+                      <td>${escapeHtml(v?.placa || '-')}</td>
+                      <td>${escapeHtml(m?.nome || '-')}</td>
+                      <td class="text-end">${fmtLitros(it.qtd_litros)}</td>
+                      <td class="text-end">${fmtBRL(valorAbast)}</td>
+                      <td class="text-end">${it.km || '-'}</td>
+                    </tr>
+                  `;
+                }).join('') || '<tr><td colspan="8" class="text-center text-secondary">Nenhum abastecimento registrado</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    /*********************
+     * RELATÓRIOS
+     *********************/
+    async function renderRelatorios() {
+      const view = qs("#view");
+      view.innerHTML = `
+        <div class="toolbar">
+          <h5 class="mb-0">Central de Relatórios</h5>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-md-4">
+            <div class="card-modern">
+              <div style="margin-bottom: 16px;">
+                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                  <i data-lucide="file-bar-chart" style="width: 24px; height: 24px; color: white;"></i>
+                </div>
+                <h5>Administrativo Mensal</h5>
+                <p class="text-secondary small">Resumo completo por contrato/fornecedor</p>
+              </div>
+              <select class="form-control-modern mb-3" id="rel_adm_contrato">
+                ${DB.contratos.map(c => {
+                  const f = findById(DB.fornecedores, c.fornecedor_id);
+                  return `<option value="${c.id}">${escapeHtml(c.numero)} - ${escapeHtml(f?.razao_social || '')}</option>`;
+                }).join('')}
+              </select>
+              <button class="btn-modern btn-primary w-100" id="btnRelAdm">
+                <i data-lucide="printer"></i>
+                Gerar Relatório
+              </button>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card-modern">
+              <div style="margin-bottom: 16px;">
+                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--success) 0%, #059669 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                  <i data-lucide="folder" style="width: 24px; height: 24px; color: white;"></i>
+                </div>
+                <h5>Por Empenho</h5>
+                <p class="text-secondary small">Todos os abastecimentos de um empenho</p>
+              </div>
+              <select class="form-control-modern mb-3" id="rel_emp_doc">
+                ${DB.documentos.filter(d => d.tipo_documento === DOC_TIPO.EMP).map(d => 
+                  `<option value="${d.id}">${escapeHtml(d.numero)} (${COMB_LABEL[d.combustivel]})</option>`
+                ).join('')}
+              </select>
+              <button class="btn-modern btn-success w-100" id="btnRelEmp">
+                <i data-lucide="printer"></i>
+                Gerar Relatório
+              </button>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card-modern">
+              <div style="margin-bottom: 16px;">
+                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                  <i data-lucide="file-text" style="width: 24px; height: 24px; color: white;"></i>
+                </div>
+                <h5>Conferência de NF</h5>
+                <p class="text-secondary small">Relatório detalhado para auditoria</p>
+              </div>
+              <select class="form-control-modern mb-3" id="rel_nf_doc">
+                ${DB.notas.filter(n => n.finalizada_em).map(n => 
+                  `<option value="${n.id}">NF ${escapeHtml(n.numero_nf)} - ${COMB_LABEL[n.combustivel]}</option>`
+                ).join('')}
+              </select>
+              <button class="btn-modern btn-primary w-100" style="background: var(--warning);" id="btnRelNF">
+                <i data-lucide="printer"></i>
+                Gerar Relatório
+              </button>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card-modern">
+              <div style="margin-bottom: 16px;">
+                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                  <i data-lucide="receipt" style="width: 24px; height: 24px; color: white;"></i>
+                </div>
+                <h5>Relatório de Pagamento</h5>
+                <p class="text-secondary small">Relatório administrativo para pagamento</p>
+              </div>
+              <select class="form-control-modern mb-3" id="rel_pag_doc">
+                ${DB.notas.filter(n => n.finalizada_em).map(n => 
+                  `<option value="${n.id}">NF ${escapeHtml(n.numero_nf)} - ${COMB_LABEL[n.combustivel]}</option>`
+                ).join('')}
+              </select>
+              <button class="btn-modern btn-primary w-100" style="background: #8b5cf6;" id="btnRelPag">
+                <i data-lucide="printer"></i>
+                Gerar Relatório
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      qs("#btnRelAdm").onclick = () => printRelAdm(qs("#rel_adm_contrato").value);
+      qs("#btnRelEmp").onclick = () => printRelEmp(qs("#rel_emp_doc").value);
+      qs("#btnRelNF").onclick = () => printRelatorioByNF(qs("#rel_nf_doc").value);
+      qs("#btnRelPag").onclick = () => printRelPagamento(qs("#rel_pag_doc").value);
+      
+      lucide.createIcons();
+    }
+
+    // Funções de impressão (mantidas do original)
+    function printRelAdm(contratoId) {
+      const c = findById(DB.contratos, contratoId);
+      if (!c) return;
+      const fornecedor = findById(DB.fornecedores, c.fornecedor_id);
+      const notas = DB.notas.filter(n => n.contrato_id === contratoId && n.finalizada_em);
+
+      const porComb = {};
+      notas.forEach(n => {
+        const itensNF = DB.itens.filter(it => it.nota_fiscal_id === n.id);
+        if (!porComb[n.combustivel]) porComb[n.combustivel] = [];
+        porComb[n.combustivel].push(...itensNF);
+      });
+
+      const printRoot = qs("#printRoot");
+      let html = `
+        <div class="rpt">
+          <div class="logo-box"><img src="https://advantagemidia.com/wp-content/uploads/2026/01/WhatsApp-Image-2026-01-15-at-10.31.14.jpeg" alt="Logo"></div>
+          <div class="title">RELATÓRIO ADMINISTRATIVO ANALÍTICO - TODOS OS ABASTECIMENTOS</div>
+          <div class="box">
+            <div class="box-title">DADOS DO CONTRATO</div>
+            <table class="kv">
+              <tr><td class="k">CONTRATO:</td><td>${escapeHtml(c.numero)}</td></tr>
+              <tr><td class="k">FORNECEDOR:</td><td>${escapeHtml(fornecedor?.razao_social || '')}</td></tr>
+              <tr><td class="k">OBJETO:</td><td>${escapeHtml(c.objeto)}</td></tr>
+            </table>
+          </div>
+      `;
+
+      for (const comb in porComb) {
+        const itens = porComb[comb].sort((a, b) => (a.data_abastecimento + a.hora).localeCompare(b.data_abastecimento + b.hora));
+        const totalLit = itens.reduce((s, x) => s + (x.qtd_litros || 0), 0);
+        const totalVal = itens.reduce((s, x) => s + (x.valor_abastecimento || 0), 0);
+
+        html += `
+          <div class="section-title">DETALHAMENTO: ${COMB_LABEL[comb]}</div>
+          <table class="items">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>NF</th>
+                <th>Placa</th>
+                <th>Doc. Abast.</th>
+                <th class="text-end">Litros</th>
+                <th class="text-end">V. Unit</th>
+                <th class="text-end">Total</th>
+                <th>Motorista</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itens.map(it => {
+                const nf = findById(DB.notas, it.nota_fiscal_id);
+                const v = findById(DB.veiculos, it.veiculo_id);
+                const m = findById(DB.motoristas, it.motorista_id);
+                return `
+                  <tr>
+                    <td>${isoToBR(it.data_abastecimento)} ${it.hora || ""}</td>
+                    <td>${escapeHtml(nf?.numero_nf || "")}</td>
+                    <td>${escapeHtml(v?.placa || "")}</td>
+                    <td>${escapeHtml(it.numero_doc || "")}</td>
+                    <td class="text-end">${fmtLitros(it.qtd_litros)}</td>
+                    <td class="text-end">${fmtBRL(it.valor_unitario)}</td>
+                    <td class="text-end">${fmtBRL(it.valor_abastecimento)}</td>
+                    <td>${escapeHtml(m?.nome || "")}</td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4" class="text-end"><b>Subtotal ${COMB_LABEL[comb]}</b></td>
+                <td class="text-end"><b>${fmtNum(totalLit)} L</b></td>
+                <td></td>
+                <td class="text-end"><b>${fmtBRL(totalVal)}</b></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+          <br>
+        `;
+      }
+
+      html += `</div>`;
+      printRoot.innerHTML = html;
+      window.print();
+    }
+
+    function printRelEmp(empId) {
+      const d = findById(DB.documentos, empId);
+      if (!d) return;
+      
+      // Compatibilidade: converter contrato_id antigo para novo formato
+      if (d.contrato_id && !d.tipo_vinculo) {
+        d.tipo_vinculo = 'CONTRATO';
+        d.vinculo_id = d.contrato_id;
+      }
+      
+      // Buscar vínculo correto
+      let vinculo = null;
+      let vinculoLabel = 'CONTRATO';
+      
+      if (d.tipo_vinculo === 'ATA') {
+        vinculo = findById(DB.atas, d.vinculo_id);
+        vinculoLabel = 'ATA';
+      } else {
+        vinculo = findById(DB.contratos, d.vinculo_id || d.contrato_id);
+        vinculoLabel = 'CONTRATO';
+      }
+      
+      const notas = DB.notas.filter(n => n.empenho_id === empId && n.finalizada_em);
+      const itens = DB.itens.filter(it => notas.some(n => n.id === it.nota_fiscal_id));
+
+      const printRoot = qs("#printRoot");
+      printRoot.innerHTML = `
+        <div class="rpt">
+          <div class="logo-box"><img src="https://advantagemidia.com/wp-content/uploads/2026/01/WhatsApp-Image-2026-01-15-at-10.31.14.jpeg" alt="Logo"></div>
+          <div class="title">RELATÓRIO POR EMPENHO</div>
+          <div class="box">
+            <table class="kv">
+              <tr><td class="k">EMPENHO Nº:</td><td>${escapeHtml(d.numero)}</td></tr>
+              <tr><td class="k">${vinculoLabel}:</td><td>${escapeHtml(vinculo?.numero || '')}</td></tr>
+              <tr><td class="k">COMBUSTÍVEL:</td><td>${COMB_LABEL[d.combustivel]}</td></tr>
+              <tr><td class="k">SALDO ATUAL:</td><td>${fmtBRL(d.saldo_atual)}</td></tr>
+            </table>
+          </div>
+          <table class="items">
+            <thead>
+              <tr><th>Data</th><th>NF</th><th>Placa</th><th class="text-end">Litros</th><th class="text-end">Valor</th></tr>
+            </thead>
+            <tbody>
+              ${itens.map(it => {
+                const nf = findById(DB.notas, it.nota_fiscal_id);
+                const v = findById(DB.veiculos, it.veiculo_id);
+                return `<tr><td>${isoToBR(it.data_abastecimento)}</td><td>${escapeHtml(nf?.numero_nf || '')}</td><td>${escapeHtml(v?.placa || '')}</td><td class="text-end">${fmtLitros(it.qtd_litros)}</td><td class="text-end">${fmtBRL(it.valor_abastecimento)}</td></tr>`;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+      window.print();
+    }
+
+    function printRelPagamento(nfId) {
+      const nf = findById(DB.notas, nfId);
+      if (!nf) {
+        console.error('NF não encontrada:', nfId);
+        return;
+      }
+      
+      console.log('📄 NF:', nf);
+      
+      const emp = findById(DB.documentos, nf.empenho_id);
+      console.log('📋 Empenho:', emp);
+      
+      // Buscar vínculo (Ata ou Contrato) - MÚLTIPLAS TENTATIVAS
+      let vinculo = null;
+      let vinculoLabel = 'ATA';
+      let vinculoTituloLabel = 'ATA DE REGISTRO DE PREÇO';
+      
+      // TENTATIVA 1: Via empenho
+      if (emp) {
+        // Compatibilidade: contrato_id antigo
+        if (emp.contrato_id && !emp.tipo_vinculo) {
+          emp.tipo_vinculo = 'CONTRATO';
+          emp.vinculo_id = emp.contrato_id;
+        }
+        
+        if (emp.tipo_vinculo === 'ATA') {
+          vinculo = findById(DB.atas, emp.vinculo_id);
+          vinculoLabel = 'ATA';
+        } else if (emp.tipo_vinculo === 'CONTRATO') {
+          vinculo = findById(DB.contratos, emp.vinculo_id);
+          vinculoLabel = 'CONTRATO';
+          vinculoTituloLabel = 'CONTRATO Nº';
+        }
+      }
+      
+      // TENTATIVA 2: Via NF.contrato_id
+      if (!vinculo && nf.contrato_id) {
+        vinculo = findById(DB.contratos, nf.contrato_id);
+        if (vinculo) {
+          vinculoLabel = 'CONTRATO';
+          vinculoTituloLabel = 'CONTRATO Nº';
+        }
+      }
+      
+      // TENTATIVA 3: Via NF.ata_id (caso exista)
+      if (!vinculo && nf.ata_id) {
+        vinculo = findById(DB.atas, nf.ata_id);
+        if (vinculo) {
+          vinculoLabel = 'ATA';
+          vinculoTituloLabel = 'ATA DE REGISTRO DE PREÇO';
+        }
+      }
+      
+      // TENTATIVA 4: Buscar primeiro contrato/ata disponível se NF tiver fornecedor_id
+      if (!vinculo && nf.fornecedor_id) {
+        vinculo = DB.atas.find(a => a.fornecedor_id === nf.fornecedor_id) || 
+                  DB.contratos.find(c => c.fornecedor_id === nf.fornecedor_id);
+        if (vinculo) {
+          vinculoLabel = vinculo.numero ? (vinculo.numero.includes('ATA') ? 'ATA' : 'CONTRATO') : 'ATA';
+          vinculoTituloLabel = vinculoLabel === 'ATA' ? 'ATA DE REGISTRO DE PREÇO' : 'CONTRATO Nº';
+        }
+      }
+      
+      console.log('📜 Vínculo encontrado:', vinculo);
+      
+      // Buscar fornecedor - MÚLTIPLAS TENTATIVAS
+      let f = null;
+      if (vinculo?.fornecedor_id) {
+        f = findById(DB.fornecedores, vinculo.fornecedor_id);
+      }
+      if (!f && nf.fornecedor_id) {
+        f = findById(DB.fornecedores, nf.fornecedor_id);
+      }
+      if (!f && emp?.fornecedor_id) {
+        f = findById(DB.fornecedores, emp.fornecedor_id);
+      }
+      
+      console.log('🏢 Fornecedor encontrado:', f);
+      
+      const itens = DB.itens.filter(it => it.nota_fiscal_id === nfId);
+      console.log('📦 Itens:', itens);
+      
+      // Calcular vigência formatada
+      let vigenciaFormatada = '-';
+      if (vinculo) {
+        if (vinculo.vigencia_inicio && vinculo.vigencia_fim) {
+          vigenciaFormatada = isoToBR(vinculo.vigencia_inicio) + ' a ' + isoToBR(vinculo.vigencia_fim);
+        } else if (vinculo.vigencia_inicio_contrato && vinculo.vigencia_fim_contrato) {
+          vigenciaFormatada = isoToBR(vinculo.vigencia_inicio_contrato) + ' a ' + isoToBR(vinculo.vigencia_fim_contrato);
+        } else if (vinculo.vigencia_inicio_ata && vinculo.vigencia_fim_ata) {
+          vigenciaFormatada = isoToBR(vinculo.vigencia_inicio_ata) + ' a ' + isoToBR(vinculo.vigencia_fim_ata);
+        }
+      }
+      
+      const totalLitros = itens.reduce((sum, it) => sum + (it.qtd_litros || 0), 0);
+      const totalValor = itens.reduce((sum, it) => sum + ((it.qtd_litros || 0) * (it.valor_unitario || 0)), 0);
+      const dataAtual = new Date().toLocaleDateString('pt-BR');
+
+      const printRoot = qs("#printRoot");
+      printRoot.innerHTML = `
+        <div class="rpt">
+          <div class="logo-box"><img src="https://advantagemidia.com/wp-content/uploads/2026/01/WhatsApp-Image-2026-01-15-at-10.31.14.jpeg" alt="Logo" style="height: 80px; width: auto;"></div>
+          <div class="title">RELATÓRIO ADMINISTRATIVO - PAGAMENTO</div>
+          
+          <div class="box">
+            <div class="box-title">DADOS DO ${vinculoLabel.toUpperCase()} E CONTRATADO</div>
+            <table class="kv">
+              <tr><td class="k">EMPRESA:</td><td colspan="3">${escapeHtml(f?.razao_social || '')}</td></tr>
+              <tr><td class="k">CNPJ:</td><td>${escapeHtml(f?.cnpj || '')}</td><td class="k" style="padding-left: 40px;">VIGÊNCIA DO ${vinculoLabel}:</td><td>${vigenciaFormatada}</td></tr>
+              <tr><td class="k">PREGÃO:</td><td>${escapeHtml(vinculo?.pregao || '-')}</td><td class="k" style="padding-left: 40px;">${vinculoTituloLabel}:</td><td>${escapeHtml(vinculo?.numero || '-')}</td></tr>
+              <tr><td class="k">MODALIDADE:</td><td colspan="3">${escapeHtml(vinculo?.modalidade || 'PREGÃO ELETRÔNICO')}</td></tr>
+              <tr><td class="k">OBJETO LICITADO:</td><td colspan="3">${escapeHtml(vinculo?.objeto || '')}</td></tr>
+            </table>
+          </div>
+
+          <div class="box">
+            <div class="box-title">DADOS DA NOTA FISCAL E EMPENHO</div>
+            <table class="kv">
+              <tr><td class="k">NOTA FISCAL Nº:</td><td>${escapeHtml(nf.numero_nf)}</td><td class="k" style="padding-left: 40px;">DATA DA EMISSÃO:</td><td>${dataAtual}</td></tr>
+              <tr><td class="k">EMPENHO Nº:</td><td>${escapeHtml(emp?.numero || '')}</td><td class="k" style="padding-left: 40px;">PRÉ-EMPENHO:</td><td>${escapeHtml(emp?.pre_empenho || '-')}</td></tr>
+              <tr><td class="k">ORDEM DE FORNECIMENTO:</td><td colspan="3">${escapeHtml(emp?.ordem_fornecimento || '-')}</td></tr>
+            </table>
+          </div>
+
+          <div class="box">
+            <div class="box-title">DADOS DO FISCAL DESIGNADO</div>
+            <table class="kv">
+              <tr><td class="k">NOME:</td><td colspan="3">${escapeHtml(DB.fiscal.nome)}</td></tr>
+              <tr><td class="k">CARGO:</td><td colspan="3">${escapeHtml(DB.fiscal.cargo)}</td></tr>
+              <tr>
+                <td class="k" style="width: 100px;">LOTAÇÃO:</td>
+                <td style="width: 350px;">${escapeHtml(DB.fiscal.lotacao)}</td>
+                <td class="k" style="width: 100px;">TELEFONE:</td>
+                <td style="white-space: nowrap;">${escapeHtml(DB.fiscal.telefone)}</td>
+              </tr>
+              <tr>
+                <td class="k" style="width: 100px;">PORTARIA:</td>
+                <td style="width: 350px;">${escapeHtml(DB.fiscal.portaria)}</td>
+                <td class="k" style="width: 100px; white-space: nowrap;">PUBLICADA NO DIORONDON Nº:</td>
+                <td style="white-space: nowrap;">${escapeHtml(DB.fiscal.portaria_diorondon)}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="box">
+            <table class="kv">
+              <tr><td class="k">PERÍODO FISCALIZADO:</td><td>${nf.periodo_inicio && nf.periodo_fim ? isoToBR(nf.periodo_inicio) + ' a ' + isoToBR(nf.periodo_fim) : (itens.length > 0 ? isoToBR(itens[0].data_abastecimento) + ' a ' + isoToBR(itens[itens.length - 1].data_abastecimento) : '-')}</td></tr>
+              <tr><td class="k">RELATÓRIO:</td><td>( X ) MENSAL &nbsp;&nbsp;&nbsp;&nbsp; ( &nbsp; ) QUADRIMESTRAL</td></tr>
+            </table>
+          </div>
+
+          <div style="margin: 16px 0; padding: 12px; border: 1px solid #ddd; background: #f9f9f9;">
+            <h6 style="margin-bottom: 8px;"><strong>1. ANÁLISE DO ${vinculoLabel}</strong></h6>
+            <p style="text-align: justify; line-height: 1.5;">
+              O presente ${vinculoLabel.toLowerCase()} com a empresa ${escapeHtml(f?.razao_social || '')} tem como objeto o fornecimento de combustível (${COMB_LABEL[nf.combustivel]}). 
+              Durante o período fiscalizado foram realizados ${itens.length} abastecimentos, totalizando ${fmtLitros(totalLitros)} litros. 
+              Os serviços foram executados conforme as especificações contratuais, não havendo pendências ou irregularidades a serem relatadas.
+            </p>
+          </div>
+
+          <div style="margin: 16px 0; padding: 12px; border: 1px solid #ddd; background: #f9f9f9;">
+            <h6 style="margin-bottom: 8px;"><strong>2. RELATÓRIO DA PRESTAÇÃO DE SERVIÇO / DOS ITENS ADQUIRIDOS</strong></h6>
+            <p style="text-align: justify; line-height: 1.5;">
+              A relação detalhada dos ${itens.length} abastecimentos realizados no período, totalizando ${fmtLitros(totalLitros)} litros no valor total de R$ ${fmtNum(totalValor)}, 
+              encontra-se discriminada no <strong>ANEXO I</strong> deste relatório (página seguinte), 
+              contendo informações de código do item, produto, quantidade, data, número do documento, placa, veículo, valores unitário e total, 
+              horário, quilometragem e motorista responsável.
+            </p>
+          </div>
+
+          <p style="margin: 20px 0 30px 0; text-align: justify;">
+            Submetemos os autos (a)o para avaliação do Gestor do contrato, Secretário Municipal de Administração.
+          </p>
+
+          <div style="text-align: right; margin-bottom: 12px;">
+            Rondonópolis/MT, ${dataAtual}
+          </div>
+        </div>
+        
+        <div class="rpt anexo-landscape">
+          <div class="logo-box"><img src="https://advantagemidia.com/wp-content/uploads/2026/01/WhatsApp-Image-2026-01-15-at-10.31.14.jpeg" alt="Logo" style="height: 80px; width: auto;"></div>
+          <div class="title">ANEXO I - RELATÓRIO DETALHADO DE ABASTECIMENTOS</div>
+          
+          <div style="margin: 12px 0; font-size: 11px;">
+            <strong>NOTA FISCAL Nº:</strong> ${escapeHtml(nf.numero_nf)} &nbsp;&nbsp;&nbsp;
+            <strong>EMPENHO Nº:</strong> ${escapeHtml(emp?.numero || '')} &nbsp;&nbsp;&nbsp;
+            <strong>PERÍODO:</strong> ${nf.periodo_inicio && nf.periodo_fim ? isoToBR(nf.periodo_inicio) + ' a ' + isoToBR(nf.periodo_fim) : (itens.length > 0 ? isoToBR(itens[0].data_abastecimento) + ' a ' + isoToBR(itens[itens.length - 1].data_abastecimento) : '-')}
+          </div>
+
+          <div class="section-title" style="font-size: 12px; margin: 8px 0;">ITENS ADQUIRIDOS</div>
+          <table class="items">
+            <thead>
+              <tr>
+                <th>Cód. Item</th>
+                <th>Produto</th>
+                <th>Qtde (L)</th>
+                <th>Data</th>
+                <th>N° Doc.</th>
+                <th>Placa</th>
+                <th>Veículo</th>
+                <th>Vlr Unit.</th>
+                <th>Vlr Abast.</th>
+                <th>Hora</th>
+                <th>Km</th>
+                <th>Motorista</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itens.map((it, idx) => {
+                const v = findById(DB.veiculos, it.veiculo_id);
+                const m = findById(DB.motoristas, it.motorista_id);
+                const valorAbast = (it.qtd_litros || 0) * (it.valor_unitario || 0);
+                
+                // Debug veículo
+                if (!v || !v.descricao) {
+                  console.warn('⚠️ Veículo sem descrição para item:', it.id, 'veiculo_id:', it.veiculo_id, 'veículo:', v);
+                }
+                
+                return `
+                  <tr>
+                    <td>${COMB_CODIGO[nf.combustivel]}</td>
+                    <td>${COMB_LABEL[nf.combustivel]}</td>
+                    <td>${fmtLitros(it.qtd_litros)}</td>
+                    <td>${isoToBR(it.data_abastecimento)}</td>
+                    <td>${escapeHtml(it.numero_doc || '')}</td>
+                    <td>${escapeHtml(v?.placa || '')}</td>
+                    <td>${escapeHtml(v?.descricao || v?.modelo || '')}</td>
+                    <td>${fmtNum(it.valor_unitario)}</td>
+                    <td>${fmtNum(valorAbast)}</td>
+                    <td>${escapeHtml(it.hora || '')}</td>
+                    <td>${escapeHtml(it.km || '')}</td>
+                    <td>${escapeHtml(m?.nome || '')}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+
+          <div style="margin: 12px 0; padding: 8px; background: #f9f9f9; border: 1px solid #ddd; font-size: 10px;">
+            <strong>TOTAL DO CÓDIGO DO ITEM: ${fmtLitros(totalLitros)} Litros | Valor Total: R$ ${fmtNum(totalValor)}</strong>
+          </div>
+
+          <div style="margin-top: 60px; text-align: center;">
+            <div style="border-top: 1px solid #000; width: 350px; margin: 0 auto 8px auto;"></div>
+            <strong>${escapeHtml(DB.fiscal.nome)}</strong><br>
+            <span>FISCAL DE CONTRATO</span>
+          </div>
+
+          <div style="margin-top: 90px; text-align: center; page-break-after: avoid !important; break-after: avoid !important;">
+            <div style="border-top: 1px solid #000; width: 350px; margin: 0 auto 8px auto;"></div>
+            <strong>LUCIANO RODRIGUES</strong><br>
+            <span>SECRETÁRIO MUNICIPAL DE ADMINISTRAÇÃO, GESTÃO DE PESSOAS E INOVAÇÃO</span>
+          </div>
+        </div>
+      `;
+      
+      console.log('✅ Relatório gerado');
+      
+      // Instruções para remover cabeçalhos/rodapés do navegador
+      setTimeout(() => {
+        alert('INSTRUÇÕES DE IMPRESSÃO:\n\n' +
+              '1. Na janela de impressão, clique em "Mais configurações"\n' +
+              '2. DESMARQUE a opção "Cabeçalhos e rodapés"\n' +
+              '3. Isso removerá a data/hora e URL da impressão\n\n' +
+              'Chrome/Edge: "Mais configurações" → Desmarcar "Cabeçalhos e rodapés"\n' +
+              'Firefox: "Configuração de página" → Desmarcar headers/footers');
+        window.print();
+      }, 100);
+    }
+
+    window.printRelatorioByNF = (nfId) => {
+      const nf = findById(DB.notas, nfId);
+      if (!nf) return;
+      
+      const emp = findById(DB.documentos, nf.empenho_id);
+      
+      // Buscar vínculo correto (Contrato ou Ata)
+      let vinculo = null;
+      let vinculoLabel = 'CONTRATO';
+      
+      if (emp) {
+        // Compatibilidade: converter contrato_id antigo
+        if (emp.contrato_id && !emp.tipo_vinculo) {
+          emp.tipo_vinculo = 'CONTRATO';
+          emp.vinculo_id = emp.contrato_id;
+        }
+        
+        if (emp.tipo_vinculo === 'ATA') {
+          vinculo = findById(DB.atas, emp.vinculo_id);
+          vinculoLabel = 'ATA';
+        } else {
+          vinculo = findById(DB.contratos, emp.vinculo_id || emp.contrato_id || nf.contrato_id);
+          vinculoLabel = 'CONTRATO';
+        }
+      } else {
+        // Fallback: buscar contrato direto da NF (compatibilidade)
+        vinculo = findById(DB.contratos, nf.contrato_id);
+      }
+      
+      const f = findById(DB.fornecedores, vinculo?.fornecedor_id);
+      const itens = DB.itens.filter(it => it.nota_fiscal_id === nfId);
+
+      const printRoot = qs("#printRoot");
+      printRoot.innerHTML = `
+        <div class="rpt">
+          <div class="logo-box"><img src="https://advantagemidia.com/wp-content/uploads/2026/01/WhatsApp-Image-2026-01-15-at-10.31.14.jpeg" alt="Logo"></div>
+          <div class="title">RELATÓRIO DETALHADO PARA CONFERÊNCIA DE NOTA FISCAL</div>
+          
+          <div class="box">
+            <div class="box-title">DADOS DA NOTA FISCAL</div>
+            <table class="kv">
+              <tr><td class="k">NOTA FISCAL Nº:</td><td>${escapeHtml(nf.numero_nf)}</td></tr>
+              <tr><td class="k">COMBUSTÍVEL:</td><td>${COMB_LABEL[nf.combustivel]}</td></tr>
+              <tr><td class="k">VALOR TOTAL NF:</td><td>${fmtBRL(nf.valor_total)}</td></tr>
+            </table>
+          </div>
+
+          <div class="box">
+            <div class="box-title">DADOS DO ${vinculoLabel} / FORNECEDOR</div>
+            <table class="kv">
+              <tr><td class="k">${vinculoLabel}:</td><td>${escapeHtml(vinculo?.numero || '')}</td></tr>
+              <tr><td class="k">FORNECEDOR:</td><td>${escapeHtml(f?.razao_social || '')}</td></tr>
+              <tr><td class="k">EMPENHO:</td><td>${escapeHtml(emp?.numero || '')}</td></tr>
+            </table>
+          </div>
+
+          <div class="section-title">DETALHAMENTO DOS ABASTECIMENTOS</div>
+          <table class="items">
+            <thead>
+              <tr>
+                <th>Data/Hora</th>
+                <th>Placa</th>
+                <th>Motorista</th>
+                <th>Doc Abast.</th>
+                <th class="text-end">Litros</th>
+                <th class="text-end">V. Unit</th>
+                <th class="text-end">Total</th>
+                <th class="text-end">KM</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itens.map(it => {
+                const v = findById(DB.veiculos, it.veiculo_id);
+                const m = findById(DB.motoristas, it.motorista_id);
+                return `
+                  <tr>
+                    <td>${isoToBR(it.data_abastecimento)} ${it.hora || ""}</td>
+                    <td>${escapeHtml(v?.placa || "")}</td>
+                    <td>${escapeHtml(m?.nome || "")}</td>
+                    <td>${escapeHtml(it.numero_doc || "")}</td>
+                    <td class="text-end">${fmtLitros(it.qtd_litros)}</td>
+                    <td class="text-end">${fmtBRL(it.valor_unitario)}</td>
+                    <td class="text-end">${fmtBRL(it.valor_abastecimento)}</td>
+                    <td class="text-end">${it.km || ""}</td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4" class="text-end"><b>TOTAL GERAL</b></td>
+                <td class="text-end"><b>${fmtLitros(itens.reduce((s, x) => s + (x.qtd_litros || 0), 0))} L</b></td>
+                <td></td>
+                <td class="text-end"><b>${fmtBRL(itens.reduce((s, x) => s + (x.valor_abastecimento || 0), 0))}</b></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      `;
+      window.print();
+    };
+
+    /*********************
+     * IMPORT/EXPORT
+     *********************/
+    async function renderImportExport() {
+      const view = qs("#view");
+      view.innerHTML = `
+        <div class="toolbar">
+          <h5 class="mb-0">Backup e Restauração</h5>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="card-modern">
+              <div style="margin-bottom: 16px;">
+                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--success) 0%, #059669 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                  <i data-lucide="download" style="width: 24px; height: 24px; color: white;"></i>
+                </div>
+                <h5>Exportar Dados</h5>
+                <p class="text-secondary">Faça backup de todos os dados do sistema em formato JSON.</p>
+              </div>
+              <button class="btn-modern btn-success w-100" id="btnExport">
+                <i data-lucide="download"></i>
+                Exportar Backup
+              </button>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card-modern">
+              <div style="margin-bottom: 16px;">
+                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                  <i data-lucide="upload" style="width: 24px; height: 24px; color: white;"></i>
+                </div>
+                <h5>Importar Dados</h5>
+                <p class="text-secondary">Restaure dados de um arquivo de backup anterior.</p>
+              </div>
+              <input type="file" accept=".json" id="fileImport" class="form-control-modern mb-3">
+              <button class="btn-modern btn-primary w-100" id="btnImport">
+                <i data-lucide="upload"></i>
+                Importar Backup
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-modern mt-4" style="background: rgba(239, 68, 68, 0.05); border-color: var(--danger);">
+          <h6 class="text-danger mb-2">
+            <i data-lucide="alert-triangle"></i>
+            Atenção
+          </h6>
+          <p class="mb-0 text-secondary small">A importação de dados substituirá completamente os dados atuais do sistema. Certifique-se de fazer um backup antes de importar.</p>
+        </div>
+      `;
+
+      lucide.createIcons();
+
+      qs("#btnExport").onclick = () => {
+        const dataStr = JSON.stringify(DB, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `backup-combustivel-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Backup exportado com sucesso!', 'success');
+      };
+
+      qs("#btnImport").onclick = () => {
+        const file = qs("#fileImport").files[0];
+        if (!file) {
+          showToast('Selecione um arquivo para importar!', 'danger');
+          return;
+        }
+
+        if (!confirm('ATENÇÃO: Esta ação substituirá todos os dados atuais. Deseja continuar?')) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            Object.assign(DB, data);
+            saveDB();
+            showToast('Dados importados com sucesso!', 'success');
+            setTimeout(() => location.reload(), 1000);
+          } catch (err) {
+            showToast('Erro ao importar arquivo. Verifique o formato.', 'danger');
+          }
+        };
+        reader.readAsText(file);
+      };
+    }
+
+    /*********************
+     * INITIALIZATION
+     *********************/
+    (async function init() {
+      console.log('🚀 Iniciando sistema...');
+      
+      // Aguardar Lucide carregar
+      let lucideAttempts = 0;
+      while (typeof lucide === 'undefined' && lucideAttempts < 20) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        lucideAttempts++;
+      }
+      
+      if (typeof lucide === 'undefined') {
+        console.warn('⚠ Lucide não carregou. Ícones podem não aparecer.');
+      } else {
+        console.log('✓ Lucide carregado');
+      }
+      
+      try {
+        // Inicializar Supabase
+        console.log('1️⃣ Inicializando Supabase...');
+        const supabaseOk = initSupabase();
+        console.log(`   useSupabase = ${useSupabase}`);
+        console.log(`   supabaseClient = ${supabaseClient ? 'conectado' : 'null'}`);
+        
+        // Carregar dados
+        console.log('2️⃣ Carregando dados...');
+        await loadDB();
+        console.log('✅ Dados carregados com sucesso');
+      } catch (error) {
+        console.error('❌ Erro na inicialização:', error);
+        // Garantir que DB tenha estrutura mínima
+        if (!DB.fornecedores) DB.fornecedores = [];
+        if (!DB.contratos) DB.contratos = [];
+        if (!DB.atas) DB.atas = [];
+        if (!DB.documentos) DB.documentos = [];
+        if (!DB.motoristas) DB.motoristas = [];
+        if (!DB.veiculos) DB.veiculos = [];
+        if (!DB.notas) DB.notas = [];
+        if (!DB.itens) DB.itens = [];
+        if (!DB.fiscal) DB.fiscal = {
+          nome: 'JHONATAN FERNANDES GOMES',
+          cargo: 'SUPERINTENDENTE DE CONTROLE DE FROTA E COMBUSTÍVEL',
+          lotacao: 'SECRETARIA DE ADMINISTRAÇÃO',
+          telefone: '(66) 99625-3604',
+          portaria: '20/2025',
+          portaria_diorondon: '5895 de 24/02/2025'
+        };
+      }
+      
+      console.log('3️⃣ Configurando interface...');
+      
+      // Mobile menu toggle
+      const btnMenu = qs("#btnMobileMenu");
+      const sidebar = qs("#sidebar");
+      
+      if (btnMenu && sidebar) {
+        function checkMobile() {
+          if (window.innerWidth <= 768) {
+            btnMenu.style.display = "flex";
+          } else {
+            btnMenu.style.display = "none";
+            sidebar.classList.remove("mobile-open");
+          }
+        }
+
+        btnMenu.onclick = () => {
+          sidebar.classList.toggle("mobile-open");
+        };
+
+        window.addEventListener("resize", checkMobile);
+        checkMobile();
+      }
+
+      // Default route
+      console.log('4️⃣ Renderizando rota inicial...');
+      if (!location.hash) location.hash = "#/dashboard";
+      
+      try {
+        await renderRoute();
+        console.log('✅ Sistema iniciado com sucesso!');
+      } catch (error) {
+        console.error('❌ Erro ao renderizar rota:', error);
+      }
+    })();
+  </script>
+</body>
+</html>
