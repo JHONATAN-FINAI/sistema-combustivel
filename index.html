@@ -2971,6 +2971,10 @@
                   <input type="text" class="form-control-modern" name="numero_nf" required>
                 </div>
                 <div class="form-group">
+                  <label class="form-label">Data de Emissão da NF *</label>
+                  <input type="date" class="form-control-modern" name="data_emissao" required>
+                </div>
+                <div class="form-group">
                   <label class="form-label">Combustível *</label>
                   <select class="form-control-modern" name="combustivel" id="selCombustivel" required>
                     <option value="">Selecione...</option>
@@ -3123,7 +3127,7 @@
           periodo_inicio: obj.periodo_inicio,
           periodo_fim: obj.periodo_fim,
           status: 'ABERTA',
-          data_emissao: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+          data_emissao: obj.data_emissao, // Data informada pelo usuário
           // Campos extras para LocalStorage (não vão para Supabase)
           contrato_id: obj.contrato_id,
           valor_total: 0,
