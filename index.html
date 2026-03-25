@@ -2938,6 +2938,9 @@
                         <button class="btn-modern btn-outline btn-sm" onclick="printRelatorioByNF('${n.id}')">
                           <i data-lucide="printer"></i>
                         </button>
+                        <button class="btn-modern btn-outline btn-sm" onclick="editDataEmissaoNota('${n.id}')" title="Editar Data de Emissão">
+                          <i data-lucide="edit-2"></i>
+                        </button>
                         <button class="btn-modern btn-danger btn-sm" onclick="deleteNota('${n.id}')">
                           <i data-lucide="trash-2"></i>
                         </button>
@@ -3416,6 +3419,75 @@
       saveDB();
       await renderRoute();
       showToast('Nota fiscal excluída!', 'success');
+    };
+
+    window.editDataEmissaoNota = async (notaId) => {
+      const nota = findById(DB.notas, notaId);
+      if (!nota) {
+        showToast('Nota fiscal não encontrada!', 'danger');
+        return;
+      }
+
+      const modal = el(`
+        <div class="modal-overlay active">
+          <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+              <h3 class="modal-title">Editar Data de Emissão</h3>
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label class="form-label">Nota Fiscal</label>
+                <input type="text" class="form-control-modern" value="${escapeHtml(nota.numero_nf)}" readonly style="background: #f0f0f0;">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Combustível</label>
+                <input type="text" class="form-control-modern" value="${COMB_LABEL[nota.combustivel]}" readonly style="background: #f0f0f0;">
+              </div>
+              <div class="form-group mb-0">
+                <label class="form-label">Data de Emissão da NF *</label>
+                <input type="date" class="form-control-modern" id="novaDataEmissao" value="${nota.data_emissao}" required>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                Cancelar
+              </button>
+              <button class="btn-modern btn-primary" id="btnSalvarDataEmissao">
+                <i data-lucide="save"></i>
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      `);
+
+      document.body.appendChild(modal);
+      lucide.createIcons();
+
+      qs("#btnSalvarDataEmissao", modal).onclick = async () => {
+        const novaData = qs("#novaDataEmissao", modal).value;
+        
+        if (!novaData) {
+          showToast('Por favor, informe a data de emissão!', 'danger');
+          return;
+        }
+
+        // Atualizar nota
+        nota.data_emissao = novaData;
+        
+        // Sincronizar com Supabase
+        await supabaseUpdate('notas', nota.id, {
+          data_emissao: novaData
+        });
+
+        saveDB();
+        modal.remove();
+        await renderRoute();
+        showToast('Data de emissão atualizada com sucesso!', 'success');
+      };
     };
 
     /*********************
