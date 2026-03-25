@@ -1414,6 +1414,31 @@
     /*********************
      * DASHBOARD
      *********************/
+    // Função auxiliar para calcular saldo de empenho
+    function calcularSaldoEmpenho(empenhoId) {
+      const emp = findById(DB.documentos, empenhoId);
+      if (!emp) return { saldoInicial: 0, valorConsumido: 0, saldoRestante: 0 };
+      
+      // Saldo inicial é sempre o valor cadastrado (FIXO)
+      const saldoInicial = emp.saldo_inicial || 0;
+      
+      // Calcular valor consumido (soma das notas vinculadas)
+      const notasDoEmpenho = DB.notas.filter(n => n.empenho_id === empenhoId);
+      let valorConsumido = 0;
+      
+      notasDoEmpenho.forEach(nota => {
+        const itensNota = DB.itens.filter(it => it.nota_fiscal_id === nota.id);
+        itensNota.forEach(item => {
+          valorConsumido += (item.qtd_litros || 0) * (item.valor_unitario || 0);
+        });
+      });
+      
+      // Saldo restante = Inicial - Consumido
+      const saldoRestante = saldoInicial - valorConsumido;
+      
+      return { saldoInicial, valorConsumido, saldoRestante };
+    }
+
     async function renderDashboard() {
       const view = qs("#view");
       
@@ -1527,20 +1552,9 @@
       let empenhosComAlerta = 0;
       
       const empenhosHtml = empenhos.map(emp => {
-        const saldoInicial = emp.saldo_atual || 0;
+        // Usar função auxiliar para calcular saldos corretamente
+        const { saldoInicial, valorConsumido, saldoRestante } = calcularSaldoEmpenho(emp.id);
         
-        // Calcular valor consumido (soma dos itens das notas vinculadas a este empenho)
-        const notasDoEmpenho = DB.notas.filter(n => n.empenho_id === emp.id);
-        let valorConsumido = 0;
-        
-        notasDoEmpenho.forEach(nota => {
-          const itensNota = DB.itens.filter(it => it.nota_fiscal_id === nota.id);
-          itensNota.forEach(item => {
-            valorConsumido += (item.qtd_litros || 0) * (item.valor_unitario || 0);
-          });
-        });
-        
-        const saldoRestante = saldoInicial - valorConsumido;
         const percentualConsumido = saldoInicial > 0 ? (valorConsumido / saldoInicial) * 100 : 0;
         
         // Determinar status
@@ -2276,14 +2290,17 @@
                     vinculoInfo = ata ? `<small>Ata</small><br>${escapeHtml(ata.numero)}` : '-';
                   }
                   
+                  // Calcular saldo atual dinamicamente
+                  const { saldoInicial, saldoRestante } = calcularSaldoEmpenho(d.id);
+                  
                   return `
                     <tr>
                       <td><span class="badge-modern ${d.tipo_documento === DOC_TIPO.EMP ? 'badge-primary' : 'badge-warning'}">${d.tipo_documento}</span></td>
                       <td><strong>${escapeHtml(d.numero)}</strong></td>
                       <td>${vinculoInfo}</td>
                       <td>${COMB_LABEL[d.combustivel]}</td>
-                      <td class="text-end">${fmtBRL(d.saldo_inicial || d.saldo_atual || 0)}</td>
-                      <td class="text-end">${fmtBRL(d.saldo_atual || 0)}</td>
+                      <td class="text-end">${fmtBRL(saldoInicial)}</td>
+                      <td class="text-end">${fmtBRL(saldoRestante)}</td>
                       <td class="text-end">
                         <button class="btn-modern btn-outline btn-sm" onclick="editDocumento('${d.id}')">
                           <i data-lucide="edit-2"></i>
@@ -3351,15 +3368,8 @@
             nota.finalizada_em = new Date().toISOString();
             nota.valor_total = totalNF;
 
-            // Atualizar saldo do empenho
-            const emp = findById(DB.documentos, nota.empenho_id);
-            if (emp) {
-              emp.saldo_atual -= totalNF;
-              // Sincronizar empenho atualizado com Supabase
-              await supabaseUpdate('documentos', emp.id, { 
-                saldo_atual: emp.saldo_atual 
-              });
-            }
+            // Saldo do empenho agora é calculado dinamicamente via calcularSaldoEmpenho()
+            // Não precisamos mais atualizar emp.saldo_atual manualmente
 
             // Sincronizar nota finalizada com Supabase
             await supabaseUpdate('notas', nota.id, {
@@ -4266,7 +4276,7 @@
           <div class="box">
             <div class="box-title">DADOS DA NOTA FISCAL E EMPENHO</div>
             <table class="kv">
-              <tr><td class="k">NOTA FISCAL Nº:</td><td>${escapeHtml(nf.numero_nf)}</td><td class="k" style="padding-left: 40px;">DATA DA EMISSÃO:</td><td>${dataAtual}</td></tr>
+              <tr><td class="k">NOTA FISCAL Nº:</td><td>${escapeHtml(nf.numero_nf)}</td><td class="k" style="padding-left: 40px;">DATA DA EMISSÃO:</td><td>${isoToBR(nf.data_emissao)}</td></tr>
               <tr><td class="k">EMPENHO Nº:</td><td>${escapeHtml(emp?.numero || '')}</td><td class="k" style="padding-left: 40px;">PRÉ-EMPENHO:</td><td>${escapeHtml(emp?.pre_empenho || '-')}</td></tr>
               <tr><td class="k">ORDEM DE FORNECIMENTO:</td><td colspan="3">${escapeHtml(emp?.ordem_fornecimento || '-')}</td></tr>
             </table>
