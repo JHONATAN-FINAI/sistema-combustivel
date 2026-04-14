@@ -2006,6 +2006,32 @@
                   <input type="text" class="form-control-modern" name="numero" value="${escapeHtml(contrato.numero || '')}" required>
                 </div>
                 <div class="form-group">
+                  <label class="form-label">Pregão</label>
+                  <input type="text" class="form-control-modern" name="pregao" value="${escapeHtml(contrato.pregao || '')}" placeholder="Ex: 001/2025">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Modalidade</label>
+                  <select class="form-control-modern" name="modalidade">
+                    <option value="PREGÃO ELETRÔNICO" ${contrato.modalidade === 'PREGÃO ELETRÔNICO' || !contrato.modalidade ? 'selected' : ''}>PREGÃO ELETRÔNICO</option>
+                    <option value="PREGÃO PRESENCIAL" ${contrato.modalidade === 'PREGÃO PRESENCIAL' ? 'selected' : ''}>PREGÃO PRESENCIAL</option>
+                    <option value="CONCORRÊNCIA" ${contrato.modalidade === 'CONCORRÊNCIA' ? 'selected' : ''}>CONCORRÊNCIA</option>
+                    <option value="TOMADA DE PREÇOS" ${contrato.modalidade === 'TOMADA DE PREÇOS' ? 'selected' : ''}>TOMADA DE PREÇOS</option>
+                    <option value="CONVITE" ${contrato.modalidade === 'CONVITE' ? 'selected' : ''}>CONVITE</option>
+                    <option value="DISPENSA" ${contrato.modalidade === 'DISPENSA' ? 'selected' : ''}>DISPENSA</option>
+                    <option value="INEXIGIBILIDADE" ${contrato.modalidade === 'INEXIGIBILIDADE' ? 'selected' : ''}>INEXIGIBILIDADE</option>
+                  </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div class="form-group">
+                    <label class="form-label">Vigência Início</label>
+                    <input type="date" class="form-control-modern" name="vigencia_inicio" value="${contrato.vigencia_inicio || ''}">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Vigência Fim</label>
+                    <input type="date" class="form-control-modern" name="vigencia_fim" value="${contrato.vigencia_fim || ''}">
+                  </div>
+                </div>
+                <div class="form-group">
                   <label class="form-label">Fornecedor *</label>
                   <select class="form-control-modern" name="fornecedor_id" required>
                     <option value="">Selecione...</option>
@@ -2156,6 +2182,18 @@
                 <div class="form-group">
                   <label class="form-label">Pregão</label>
                   <input type="text" class="form-control-modern" name="pregao" value="${escapeHtml(ata.pregao || '')}" placeholder="Ex: 001/2025">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Modalidade</label>
+                  <select class="form-control-modern" name="modalidade">
+                    <option value="PREGÃO ELETRÔNICO" ${ata.modalidade === 'PREGÃO ELETRÔNICO' || !ata.modalidade ? 'selected' : ''}>PREGÃO ELETRÔNICO</option>
+                    <option value="PREGÃO PRESENCIAL" ${ata.modalidade === 'PREGÃO PRESENCIAL' ? 'selected' : ''}>PREGÃO PRESENCIAL</option>
+                    <option value="CONCORRÊNCIA" ${ata.modalidade === 'CONCORRÊNCIA' ? 'selected' : ''}>CONCORRÊNCIA</option>
+                    <option value="TOMADA DE PREÇOS" ${ata.modalidade === 'TOMADA DE PREÇOS' ? 'selected' : ''}>TOMADA DE PREÇOS</option>
+                    <option value="CONVITE" ${ata.modalidade === 'CONVITE' ? 'selected' : ''}>CONVITE</option>
+                    <option value="DISPENSA" ${ata.modalidade === 'DISPENSA' ? 'selected' : ''}>DISPENSA</option>
+                    <option value="INEXIGIBILIDADE" ${ata.modalidade === 'INEXIGIBILIDADE' ? 'selected' : ''}>INEXIGIBILIDADE</option>
+                  </select>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                   <div class="form-group">
@@ -4318,14 +4356,8 @@
       
       // Calcular vigência formatada
       let vigenciaFormatada = '-';
-      if (vinculo) {
-        if (vinculo.vigencia_inicio && vinculo.vigencia_fim) {
-          vigenciaFormatada = isoToBR(vinculo.vigencia_inicio) + ' a ' + isoToBR(vinculo.vigencia_fim);
-        } else if (vinculo.vigencia_inicio_contrato && vinculo.vigencia_fim_contrato) {
-          vigenciaFormatada = isoToBR(vinculo.vigencia_inicio_contrato) + ' a ' + isoToBR(vinculo.vigencia_fim_contrato);
-        } else if (vinculo.vigencia_inicio_ata && vinculo.vigencia_fim_ata) {
-          vigenciaFormatada = isoToBR(vinculo.vigencia_inicio_ata) + ' a ' + isoToBR(vinculo.vigencia_fim_ata);
-        }
+      if (vinculo && vinculo.vigencia_inicio && vinculo.vigencia_fim) {
+        vigenciaFormatada = isoToBR(vinculo.vigencia_inicio) + ' a ' + isoToBR(vinculo.vigencia_fim);
       }
       
       const totalLitros = itens.reduce((sum, it) => sum + (it.qtd_litros || 0), 0);
