@@ -3322,7 +3322,10 @@
                             <td class="text-end">${fmtBRL(it.valor_unitario)}</td>
                             <td class="text-end">${fmtBRL(it.valor_abastecimento)}</td>
                             ${!nota.finalizada_em ? `
-                              <td class="text-end">
+                              <td class="text-end" style="white-space:nowrap;">
+                                <button class="btn-modern btn-outline btn-sm" style="margin-right:4px;" onclick="editAbastecimento('${it.id}', '${notaId}')">
+                                  <i data-lucide="pencil"></i>
+                                </button>
                                 <button class="btn-modern btn-danger btn-sm" onclick="deleteAbastecimento('${it.id}', '${notaId}')">
                                   <i data-lucide="trash-2"></i>
                                 </button>
@@ -3442,6 +3445,117 @@
       const modal = document.querySelector('.modal-overlay');
       if (modal) modal.remove();
       gerenciarNota(notaId);
+    };
+
+    window.editAbastecimento = (itemId, notaId) => {
+      const item = findById(DB.itens, itemId);
+      const nota = findById(DB.notas, notaId);
+      if (!item || !nota) return;
+
+      const modal = el(`
+        <div class="modal-overlay active">
+          <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+              <h3 class="modal-title">Editar Abastecimento</h3>
+              <button class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="formEditAbastecimento" class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Data *</label>
+                  <input type="date" class="form-control-modern" name="data_abastecimento" value="${item.data_abastecimento || ''}" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Hora</label>
+                  <input type="time" class="form-control-modern" name="hora" value="${item.hora || ''}">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Veículo *</label>
+                  <select class="form-control-modern" name="veiculo_id" required>
+                    <option value="">Selecione...</option>
+                    ${DB.veiculos.map(v => `<option value="${v.id}" ${v.id === item.veiculo_id ? 'selected' : ''}>${escapeHtml(v.placa)}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Motorista *</label>
+                  <select class="form-control-modern" name="motorista_id" required>
+                    <option value="">Selecione...</option>
+                    ${DB.motoristas.map(m => `<option value="${m.id}" ${m.id === item.motorista_id ? 'selected' : ''}>${escapeHtml(m.nome)}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Qtd Litros *</label>
+                  <input type="number" step="0.001" class="form-control-modern" name="qtd_litros" value="${item.qtd_litros || ''}" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Valor Unit (R$) *</label>
+                  <input type="number" step="0.001" class="form-control-modern" name="valor_unitario" value="${item.valor_unitario || ''}" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">KM</label>
+                  <input type="number" class="form-control-modern" name="km" value="${item.km || ''}">
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Doc Abast.</label>
+                  <input type="text" class="form-control-modern" name="numero_doc" value="${escapeHtml(item.numero_doc || '')}">
+                </div>
+                <div class="col-12" style="display:flex; gap:12px; justify-content:flex-end; margin-top:8px;">
+                  <button type="button" class="btn-modern btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+                  <button type="submit" class="btn-modern btn-primary">
+                    <i data-lucide="save"></i>
+                    Salvar alterações
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      `);
+
+      document.body.appendChild(modal);
+      lucide.createIcons();
+
+      qs('#formEditAbastecimento', modal).onsubmit = async (e) => {
+        e.preventDefault();
+        const obj = Object.fromEntries(new FormData(e.target).entries());
+
+        const qtd   = parseFloat(obj.qtd_litros);
+        const vUnit = parseFloat(obj.valor_unitario);
+
+        // Atualizar no DB local
+        item.data_abastecimento = obj.data_abastecimento;
+        item.hora               = obj.hora || null;
+        item.veiculo_id         = obj.veiculo_id || null;
+        item.motorista_id       = obj.motorista_id || null;
+        item.qtd_litros         = qtd;
+        item.valor_unitario     = vUnit;
+        item.km                 = obj.km ? parseInt(obj.km) : null;
+        item.numero_doc         = obj.numero_doc || null;
+        item.valor_abastecimento = qtd * vUnit;
+
+        const supabaseFields = {
+          data_abastecimento: item.data_abastecimento,
+          hora:               item.hora,
+          veiculo_id:         item.veiculo_id,
+          motorista_id:       item.motorista_id,
+          qtd_litros:         item.qtd_litros,
+          valor_unitario:     item.valor_unitario,
+          km:                 item.km,
+          numero_doc:         item.numero_doc
+        };
+
+        await supabaseUpdate('itens', itemId, supabaseFields);
+        saveDB();
+
+        modal.remove();
+        // Fechar modal de gerenciamento e reabrir atualizado
+        const modalGerenciar = document.querySelector('.modal-overlay');
+        if (modalGerenciar) modalGerenciar.remove();
+        showToast('Abastecimento atualizado!', 'success');
+        gerenciarNota(notaId);
+      };
     };
 
     window.deleteNota = async (id) => {
