@@ -4795,10 +4795,9 @@
       const filtroProduto = produto ? (COMB_LABEL[produto] || produto) : 'Todos os produtos';
 
       const linhas = itens.map((it, idx) => {
-        const nf   = findById(DB.notas, it.nota_fiscal_id);
-        const v    = findById(DB.veiculos, it.veiculo_id);
-        const m    = findById(DB.motoristas, it.motorista_id);
-        const prod = COMB_LABEL[nf?.combustivel] || nf?.combustivel || '-';
+        // Comparação com String() para cobrir mismatch de tipo UUID vs string vindo do Supabase
+        const v = DB.veiculos.find(x => String(x.id) === String(it.veiculo_id));
+        const m = DB.motoristas.find(x => String(x.id) === String(it.motorista_id));
         const valorAbast = (it.qtd_litros || 0) * (it.valor_unitario || 0);
         return `
           <tr>
@@ -4807,7 +4806,6 @@
             <td>${it.hora || '-'}</td>
             <td>${escapeHtml(v?.placa || '-')}</td>
             <td>${escapeHtml(v?.modelo || '-')}</td>
-            <td>${escapeHtml(prod)}</td>
             <td class="text-end">${fmtLitros(it.qtd_litros)}</td>
             <td class="text-end">${fmtBRL(it.valor_unitario)}</td>
             <td class="text-end">${fmtBRL(valorAbast)}</td>
@@ -4845,7 +4843,6 @@
                 <th>Hora</th>
                 <th>Placa</th>
                 <th>Veículo</th>
-                <th>Produto</th>
                 <th class="text-end">Qtd (L)</th>
                 <th class="text-end">Vl. Unit.</th>
                 <th class="text-end">Vl. Abast.</th>
@@ -4858,7 +4855,7 @@
             </tbody>
             <tfoot>
               <tr>
-                <td colspan="6" class="text-end"><strong>TOTAIS:</strong></td>
+                <td colspan="5" class="text-end"><strong>TOTAIS:</strong></td>
                 <td class="text-end"><strong>${fmtLitros(totalLitros)}</strong></td>
                 <td></td>
                 <td class="text-end"><strong>${fmtBRL(totalValor)}</strong></td>
