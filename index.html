@@ -4799,13 +4799,14 @@
         const v = DB.veiculos.find(x => String(x.id) === String(it.veiculo_id));
         const m = DB.motoristas.find(x => String(x.id) === String(it.motorista_id));
         const valorAbast = (it.qtd_litros || 0) * (it.valor_unitario || 0);
+        const veiDesc = v ? (v.descricao || v.modelo || '-') : '-';
         return `
           <tr>
             <td class="text-center">${idx + 1}</td>
             <td>${isoToBR(it.data_abastecimento)}</td>
             <td>${it.hora || '-'}</td>
             <td>${escapeHtml(v?.placa || '-')}</td>
-            <td>${escapeHtml(v?.modelo || '-')}</td>
+            <td>${escapeHtml(veiDesc)}</td>
             <td class="text-end">${fmtLitros(it.qtd_litros)}</td>
             <td class="text-end">${fmtBRL(it.valor_unitario)}</td>
             <td class="text-end">${fmtBRL(valorAbast)}</td>
