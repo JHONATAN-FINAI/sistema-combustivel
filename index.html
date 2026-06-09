@@ -4784,8 +4784,9 @@
       // Ordenar por data + hora
       itens.sort((a, b) => (a.data_abastecimento + (a.hora || '')).localeCompare(b.data_abastecimento + (b.hora || '')));
 
+      // Calcular valor_abastecimento na hora (campo não existe no Supabase)
       const totalLitros = itens.reduce((s, it) => s + (it.qtd_litros || 0), 0);
-      const totalValor  = itens.reduce((s, it) => s + (it.valor_abastecimento || 0), 0);
+      const totalValor  = itens.reduce((s, it) => s + ((it.qtd_litros || 0) * (it.valor_unitario || 0)), 0);
 
       // Descrição dos filtros aplicados
       const filtroPeriodo = dataInicio || dataFim
@@ -4794,10 +4795,11 @@
       const filtroProduto = produto ? (COMB_LABEL[produto] || produto) : 'Todos os produtos';
 
       const linhas = itens.map((it, idx) => {
-        const nf = findById(DB.notas, it.nota_fiscal_id);
-        const v  = findById(DB.veiculos, it.veiculo_id);
-        const m  = findById(DB.motoristas, it.motorista_id);
+        const nf   = findById(DB.notas, it.nota_fiscal_id);
+        const v    = findById(DB.veiculos, it.veiculo_id);
+        const m    = findById(DB.motoristas, it.motorista_id);
         const prod = COMB_LABEL[nf?.combustivel] || nf?.combustivel || '-';
+        const valorAbast = (it.qtd_litros || 0) * (it.valor_unitario || 0);
         return `
           <tr>
             <td class="text-center">${idx + 1}</td>
@@ -4808,7 +4810,7 @@
             <td>${escapeHtml(prod)}</td>
             <td class="text-end">${fmtLitros(it.qtd_litros)}</td>
             <td class="text-end">${fmtBRL(it.valor_unitario)}</td>
-            <td class="text-end">${fmtBRL(it.valor_abastecimento)}</td>
+            <td class="text-end">${fmtBRL(valorAbast)}</td>
             <td class="text-center">${it.km ? fmtNum(it.km, 0) : '-'}</td>
             <td>${escapeHtml(m?.nome || '-')}</td>
           </tr>
@@ -4817,6 +4819,11 @@
 
       const printRoot = qs("#printRoot");
       printRoot.innerHTML = `
+        <style>
+          @media print {
+            @page { size: A4 landscape; margin: 10mm; }
+          }
+        </style>
         <div class="rpt">
           <div class="logo-box"><img src="https://raw.githubusercontent.com/JHONATAN-FINAI/assets-prefeitura-rondonopolis/af6fa70c4657ac5660342f7838f3f067b9f13124/SECRETARIA%20MUNICIPAL%20DE%20ADMINISTRA%C3%87%C3%83O%2C%20GEST%C3%83O%20DE%20PESSOAS%20E%20INOVA%C3%87%C3%83O.png" alt="Logo"></div>
           <div class="title">RELATÓRIO COMPLETO DE ABASTECIMENTOS</div>
