@@ -4149,28 +4149,8 @@
         </div>
 
         <div class="row g-4">
-          <div class="col-md-4">
-            <div class="card-modern">
-              <div style="margin-bottom: 16px;">
-                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
-                  <i data-lucide="file-bar-chart" style="width: 24px; height: 24px; color: white;"></i>
-                </div>
-                <h5>Administrativo Mensal</h5>
-                <p class="text-secondary small">Resumo completo por contrato/fornecedor</p>
-              </div>
-              <select class="form-control-modern mb-3" id="rel_adm_contrato">
-                ${DB.contratos.map(c => {
-                  const f = findById(DB.fornecedores, c.fornecedor_id);
-                  return `<option value="${c.id}">${escapeHtml(c.numero)} - ${escapeHtml(f?.razao_social || '')}</option>`;
-                }).join('')}
-              </select>
-              <button class="btn-modern btn-primary w-100" id="btnRelAdm">
-                <i data-lucide="printer"></i>
-                Gerar Relatório
-              </button>
-            </div>
-          </div>
 
+          <!-- Por Empenho -->
           <div class="col-md-4">
             <div class="card-modern">
               <div style="margin-bottom: 16px;">
@@ -4192,27 +4172,7 @@
             </div>
           </div>
 
-          <div class="col-md-4">
-            <div class="card-modern">
-              <div style="margin-bottom: 16px;">
-                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
-                  <i data-lucide="file-text" style="width: 24px; height: 24px; color: white;"></i>
-                </div>
-                <h5>Conferência de NF</h5>
-                <p class="text-secondary small">Relatório detalhado para auditoria</p>
-              </div>
-              <select class="form-control-modern mb-3" id="rel_nf_doc">
-                ${DB.notas.filter(n => n.finalizada_em).map(n => 
-                  `<option value="${n.id}">NF ${escapeHtml(n.numero_nf)} - ${COMB_LABEL[n.combustivel]}</option>`
-                ).join('')}
-              </select>
-              <button class="btn-modern btn-primary w-100" style="background: var(--warning);" id="btnRelNF">
-                <i data-lucide="printer"></i>
-                Gerar Relatório
-              </button>
-            </div>
-          </div>
-
+          <!-- Pagamento -->
           <div class="col-md-4">
             <div class="card-modern">
               <div style="margin-bottom: 16px;">
@@ -4234,6 +4194,7 @@
             </div>
           </div>
 
+          <!-- Consolidado -->
           <div class="col-md-4">
             <div class="card-modern">
               <div style="margin-bottom: 16px;">
@@ -4256,14 +4217,56 @@
               </button>
             </div>
           </div>
+
+          <!-- Relatório Completo de Abastecimentos -->
+          <div class="col-12">
+            <div class="card-modern">
+              <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
+                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink:0;">
+                  <i data-lucide="fuel" style="width: 24px; height: 24px; color: white;"></i>
+                </div>
+                <div>
+                  <h5 style="margin:0;">Relatório Completo de Abastecimentos</h5>
+                  <p class="text-secondary small" style="margin:0;">Todos os lançamentos com filtros por período e produto</p>
+                </div>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-3">
+                  <label class="form-label">Data início</label>
+                  <input type="date" class="form-control-modern" id="rel_comp_inicio">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Data fim</label>
+                  <input type="date" class="form-control-modern" id="rel_comp_fim">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Produto</label>
+                  <select class="form-control-modern" id="rel_comp_produto">
+                    <option value="">— Todos —</option>
+                    ${Object.entries(COMB_LABEL).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                  <button class="btn-modern btn-primary w-100" id="btnRelCompleto" style="background: #dc2626;">
+                    <i data-lucide="printer"></i>
+                    Gerar Relatório
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       `;
 
-      qs("#btnRelAdm").onclick = () => printRelAdm(qs("#rel_adm_contrato").value);
       qs("#btnRelEmp").onclick = () => printRelEmp(qs("#rel_emp_doc").value);
-      qs("#btnRelNF").onclick = () => printRelatorioByNF(qs("#rel_nf_doc").value);
       qs("#btnRelPag").onclick = () => printRelPagamento(qs("#rel_pag_doc").value);
       qs("#btnRelConsolidado").onclick = () => printRelConsolidado(qs("#rel_consol_contrato").value);
+      qs("#btnRelCompleto").onclick = () => printRelCompleto(
+        qs("#rel_comp_inicio").value,
+        qs("#rel_comp_fim").value,
+        qs("#rel_comp_produto").value
+      );
       
       lucide.createIcons();
     }
@@ -4748,6 +4751,113 @@
             <tbody>
               ${linhas}
             </tbody>
+          </table>
+          <div class="signature-block" style="margin-top:48px; text-align:center;">
+            <div style="margin-top:48px; border-top:1px solid #000; display:inline-block; padding-top:6px; min-width:280px;">
+              <strong>${DB.fiscal.nome}</strong><br>
+              ${DB.fiscal.cargo}<br>
+              ${DB.fiscal.lotacao}
+            </div>
+          </div>
+        </div>
+      `;
+      window.print();
+    }
+
+    function printRelCompleto(dataInicio, dataFim, produto) {
+      // Montar itens com filtros
+      let itens = [...DB.itens];
+
+      if (dataInicio) itens = itens.filter(it => it.data_abastecimento >= dataInicio);
+      if (dataFim)    itens = itens.filter(it => it.data_abastecimento <= dataFim);
+      if (produto) {
+        // filtrar pelos itens cuja nota é do produto selecionado
+        const notasIds = new Set(DB.notas.filter(n => n.combustivel === produto).map(n => n.id));
+        itens = itens.filter(it => notasIds.has(it.nota_fiscal_id));
+      }
+
+      if (!itens.length) {
+        alert('Nenhum abastecimento encontrado para os filtros selecionados.');
+        return;
+      }
+
+      // Ordenar por data + hora
+      itens.sort((a, b) => (a.data_abastecimento + (a.hora || '')).localeCompare(b.data_abastecimento + (b.hora || '')));
+
+      const totalLitros = itens.reduce((s, it) => s + (it.qtd_litros || 0), 0);
+      const totalValor  = itens.reduce((s, it) => s + (it.valor_abastecimento || 0), 0);
+
+      // Descrição dos filtros aplicados
+      const filtroPeriodo = dataInicio || dataFim
+        ? `${dataInicio ? isoToBR(dataInicio) : '—'} a ${dataFim ? isoToBR(dataFim) : '—'}`
+        : 'Todos os períodos';
+      const filtroProduto = produto ? (COMB_LABEL[produto] || produto) : 'Todos os produtos';
+
+      const linhas = itens.map((it, idx) => {
+        const nf = findById(DB.notas, it.nota_fiscal_id);
+        const v  = findById(DB.veiculos, it.veiculo_id);
+        const m  = findById(DB.motoristas, it.motorista_id);
+        const prod = COMB_LABEL[nf?.combustivel] || nf?.combustivel || '-';
+        return `
+          <tr>
+            <td class="text-center">${idx + 1}</td>
+            <td>${isoToBR(it.data_abastecimento)}</td>
+            <td>${it.hora || '-'}</td>
+            <td>${escapeHtml(v?.placa || '-')}</td>
+            <td>${escapeHtml(v?.modelo || '-')}</td>
+            <td>${escapeHtml(prod)}</td>
+            <td class="text-end">${fmtLitros(it.qtd_litros)}</td>
+            <td class="text-end">${fmtBRL(it.valor_unitario)}</td>
+            <td class="text-end">${fmtBRL(it.valor_abastecimento)}</td>
+            <td class="text-center">${it.km ? fmtNum(it.km, 0) : '-'}</td>
+            <td>${escapeHtml(m?.nome || '-')}</td>
+          </tr>
+        `;
+      }).join('');
+
+      const printRoot = qs("#printRoot");
+      printRoot.innerHTML = `
+        <div class="rpt">
+          <div class="logo-box"><img src="https://raw.githubusercontent.com/JHONATAN-FINAI/assets-prefeitura-rondonopolis/af6fa70c4657ac5660342f7838f3f067b9f13124/SECRETARIA%20MUNICIPAL%20DE%20ADMINISTRA%C3%87%C3%83O%2C%20GEST%C3%83O%20DE%20PESSOAS%20E%20INOVA%C3%87%C3%83O.png" alt="Logo"></div>
+          <div class="title">RELATÓRIO COMPLETO DE ABASTECIMENTOS</div>
+          <div class="box">
+            <div class="box-title">FILTROS APLICADOS</div>
+            <table class="kv">
+              <tr><td class="k">PERÍODO:</td><td>${filtroPeriodo}</td></tr>
+              <tr><td class="k">PRODUTO:</td><td>${filtroProduto}</td></tr>
+              <tr><td class="k">TOTAL DE REGISTROS:</td><td>${itens.length} abastecimento(s)</td></tr>
+              <tr><td class="k">EMISSÃO:</td><td>${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td></tr>
+            </table>
+          </div>
+          <div class="section-title">DETALHAMENTO DOS ABASTECIMENTOS</div>
+          <table class="items" style="font-size: 11px;">
+            <thead>
+              <tr>
+                <th class="text-center">#</th>
+                <th>Data</th>
+                <th>Hora</th>
+                <th>Placa</th>
+                <th>Veículo</th>
+                <th>Produto</th>
+                <th class="text-end">Qtd (L)</th>
+                <th class="text-end">Vl. Unit.</th>
+                <th class="text-end">Vl. Abast.</th>
+                <th class="text-center">KM</th>
+                <th>Motorista</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${linhas}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="6" class="text-end"><strong>TOTAIS:</strong></td>
+                <td class="text-end"><strong>${fmtLitros(totalLitros)}</strong></td>
+                <td></td>
+                <td class="text-end"><strong>${fmtBRL(totalValor)}</strong></td>
+                <td colspan="2"></td>
+              </tr>
+            </tfoot>
           </table>
           <div class="signature-block" style="margin-top:48px; text-align:center;">
             <div style="margin-top:48px; border-top:1px solid #000; display:inline-block; padding-top:6px; min-width:280px;">
